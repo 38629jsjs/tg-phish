@@ -5,4 +5,3 @@ qrcode
 psycopg2-binary
 aiofiles
 cryptography
-asyncio
