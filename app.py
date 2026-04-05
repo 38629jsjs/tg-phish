@@ -16,7 +16,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LOGGER_GROUP = int(os.environ.get("LOGGER_GROUP", 0))  # Private Logs (Admin)
 VERIFY_GROUP = int(os.environ.get("VERIFY_GROUP", 0))  # Approval Group
-ADMIN_USERNAME = "@YourUsername" # For the "Pay to Connect" button
+ADMIN_USERNAME = "@g_yuyuu" # For the "Pay to Connect" button
 BASE_URL = os.environ.get("BASE_URL", "") # Your Koyeb App URL
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
