@@ -3,3 +3,4 @@ telethon
 pyTelegramBotAPI
 cryptography
 uvicorn
+gunicorn
