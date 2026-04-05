@@ -241,4 +241,4 @@ def unknown_cmd(m):
 # --- 8. RUNNER ---
 if __name__ == "__main__":
     Thread(target=lambda: bot.infinity_polling()).start()
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8000)
