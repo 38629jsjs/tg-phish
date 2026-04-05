@@ -1,7 +1,7 @@
 quart
 telethon
 pyTelegramBotAPI
-cryptography
+qrcode
+Pillow
 uvicorn
 gunicorn
-python-dotenv
