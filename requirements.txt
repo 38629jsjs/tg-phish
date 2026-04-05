@@ -1,7 +1,8 @@
-telebot
 telethon
-qrcode
+pyTelegramBotAPI
 quart
+qrcode
+psycopg2-binary
 aiofiles
 cryptography
-intl-tel-input
+asyncio
