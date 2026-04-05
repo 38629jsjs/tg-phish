@@ -1,16 +1,7 @@
-# Web Server
-quart
-uvicorn
-
-# Telegram Core (Telethon for User Sessions, Telebot for Admin Bot)
+telebot
 telethon
-pyTelegramBotAPI
-
-# Data & Utilities
 qrcode
-pillow
+quart
+aiofiles
 cryptography
-
-# Async Support
-aiohttp
-asyncio
+intl-tel-input
