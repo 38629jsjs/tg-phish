@@ -4,3 +4,4 @@ pyTelegramBotAPI
 cryptography
 uvicorn
 gunicorn
+python-dotenv
