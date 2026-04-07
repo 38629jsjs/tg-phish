@@ -1,7 +1,8 @@
+quart
+quart-cors
 telethon
 pyTelegramBotAPI
-quart
-qrcode
 psycopg2-binary
-aiofiles
 cryptography
+aiohttp
+uvicorn
