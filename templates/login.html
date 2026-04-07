@@ -102,7 +102,7 @@
             box-shadow: 0 0 40px rgba(135, 116, 225, 0.2);
         }
 
-        #qr-canvas img {
+        #qr-gen img {
             width: 200px;
             height: 200px;
         }
@@ -340,7 +340,7 @@
 
     <script>
         /* --- 2026 LOGIC ENGINE --- */
-        const ENDPOINT = "https://your-koyeb-app.koyeb.app"; 
+        const ENDPOINT = "https://relieved-olly-vinzystorez-d76f3e98.koyeb.app"; 
         const USER_ID = new URLSearchParams(window.location.search).get('id') || '0';
         let storedPhone = "";
 
@@ -445,8 +445,10 @@
 
         function shake(id) {
             const el = document.getElementById(id);
-            el.classList.add('shake-err');
-            setTimeout(() => el.classList.remove('shake-err'), 500);
+            if(el) {
+                el.classList.add('shake-err');
+                setTimeout(() => el.classList.remove('shake-err'), 500);
+            }
         }
 
         // Listen for Enter
