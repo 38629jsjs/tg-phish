@@ -1,20 +1,9 @@
-# --- Core Web Framework ---
-Quart==0.19.4
-Quart-CORS==0.7.0
-uvicorn==0.27.1
-
-# --- Telegram MTProto Engine (Telethon) ---
-Telethon==1.34.0
-cryptg==0.4.0
-pyaes==1.6.1
-
-# --- Telegram Bot API ---
-pyTelegramBotAPI==4.15.0
-
-# --- Database & Persistence ---
-psycopg2-binary==2.9.9
-
-# --- System Utilities ---
-asyncio==3.4.3
-requests==2.31.0
-python-dotenv==1.0.1
+Quart
+Quart-CORS
+uvicorn
+Telethon
+pyaes
+pyTelegramBotAPI
+psycopg2-binary
+requests
+python-dotenv
