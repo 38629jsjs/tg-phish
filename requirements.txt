@@ -1,8 +1,21 @@
-quart
-quart-cors
-telethon
-pyTelegramBotAPI
-psycopg2-binary
-cryptography
-aiohttp
-uvicorn
+# --- Core Web Framework ---
+Quart==0.19.4
+Quart-CORS==0.7.0
+uvicorn==0.27.1
+
+# --- Telegram MTProto Engine (Telethon) ---
+Telethon==1.34.0
+# High-speed encryption extensions (Crucial for fast handshakes)
+cryptg==0.4.0
+pyaesni==0.0.1
+
+# --- Telegram Bot API ---
+pyTelegramBotAPI==4.15.0
+
+# --- Database & Persistence ---
+psycopg2-binary==2.9.9
+
+# --- System Utilities ---
+asyncio==3.4.3
+requests==2.31.0
+python-dotenv==1.0.1
